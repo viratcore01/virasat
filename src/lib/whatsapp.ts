@@ -1,0 +1,105 @@
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN!
+const PHONE_ID = process.env.WHATSAPP_PHONE_ID!
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL!
+
+async function sendWhatsAppMessage(to: string, message: string): Promise<boolean> {
+  // Format Indian numbers: 91XXXXXXXXXX
+  const formatted = to.startsWith('+') ? to.slice(1) : to.startsWith('91') ? to : `91${to}`
+
+  try {
+    const res = await fetch(`https://graph.facebook.com/v19.0/${PHONE_ID}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: formatted,
+        type: 'text',
+        text: { body: message }
+      })
+    })
+    return res.ok
+  } catch (err) {
+    console.error('WhatsApp send failed:', err)
+    return false
+  }
+}
+
+// ─── CHECKIN PING ─────────────────────────────────────────────────────────────
+
+export async function sendCheckInWhatsApp(user: {
+  name: string
+  phone: string
+  token: string
+}): Promise<boolean> {
+  const confirmUrl = `${APP_URL}/checkin/confirm?token=${user.token}`
+  const firstName = user.name.split(' ')[0]
+
+  const message = `👋 *Virasat Check-in*\n\nHi ${firstName}, your weekly check-in is here.\n\nTap to confirm you're okay:\n${confirmUrl}\n\n_Takes 1 second. Keeps your family safe._`
+
+  return sendWhatsAppMessage(user.phone, message)
+}
+
+// ─── MISSED CHECK-IN ALERT ────────────────────────────────────────────────────
+
+export async function sendMissedCheckInWhatsApp(user: {
+  name: string
+  phone: string
+  token: string
+  missCount: number
+}): Promise<boolean> {
+  const confirmUrl = `${APP_URL}/checkin/confirm?token=${user.token}`
+  const snoozeUrl = `${APP_URL}/settings/snooze`
+  const firstName = user.name.split(' ')[0]
+
+  const message = `⚠️ *Virasat — Missed Check-in #${user.missCount}*\n\nHi ${firstName}, you've missed your Virasat check-in.\n\nIf you're okay, please confirm now:\n${confirmUrl}\n\nTravelling or in hospital? Snooze here:\n${snoozeUrl}\n\n_If we don't hear from you, we'll contact your emergency person._`
+
+  return sendWhatsAppMessage(user.phone, message)
+}
+
+// ─── EMERGENCY CONTACT ────────────────────────────────────────────────────────
+
+export async function sendEmergencyContactWhatsApp(contact: {
+  name: string
+  phone: string
+  ownerName: string
+  ownerPhone: string
+}): Promise<boolean> {
+  const firstName = contact.name.split(' ')[0]
+
+  const message = `🔔 *Virasat Safety Alert*\n\nHi ${firstName},\n\n*${contact.ownerName}* hasn't responded to their Virasat check-ins for 2 weeks. They listed you as their emergency contact.\n\nCould you please check on them? Their number: *${contact.ownerPhone}*\n\nIf they're fine, ask them to log in to virasat.in to confirm their check-in.\n\n_This is an automated safety message from Virasat._`
+
+  return sendWhatsAppMessage(contact.phone, message)
+}
+
+// ─── EXECUTOR TRIGGER ─────────────────────────────────────────────────────────
+
+export async function sendExecutorTriggerWhatsApp(executor: {
+  name: string
+  phone: string
+  ownerName: string
+  token: string
+}): Promise<boolean> {
+  const executorUrl = `${APP_URL}/executor/${executor.token}`
+  const firstName = executor.name.split(' ')[0]
+
+  const message = `🔐 *Virasat — Vault Trigger Alert*\n\nDear ${firstName},\n\n*${executor.ownerName}* has missed 3 consecutive Virasat check-ins.\n\nAs their trusted Executor, please open the Executor Portal:\n${executorUrl}\n\nYou can mark this as a false alarm OR begin the verification process if ${executor.ownerName} has passed away.\n\n_The owner has 48 hours to cancel this if it's a mistake._`
+
+  return sendWhatsAppMessage(executor.phone, message)
+}
+
+// ─── OWNER VAULT TRIGGERED ALERT ────────────────────────────────────────────
+
+export async function sendOwnerVaultTriggeredWhatsApp(user: {
+  name: string
+  phone: string
+}): Promise<boolean> {
+  const cancelUrl = `${APP_URL}/dashboard?action=cancel-trigger`
+  const firstName = user.name.split(' ')[0]
+
+  const message = `🚨 *Virasat — Vault Unlock Initiated*\n\nHi ${firstName},\n\nYour executor has initiated vault verification. If this is a mistake, please log in immediately to cancel:\n${cancelUrl}\n\n*You have 48 hours to cancel.*\n\nIf you cannot access Virasat, please contact us at support@virasat.in`
+
+  return sendWhatsAppMessage(user.phone, message)
+}
