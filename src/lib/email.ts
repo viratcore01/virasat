@@ -1,6 +1,7 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Provide a dummy fallback so Vercel builds don't crash when RESEND_API_KEY is undefined during static compilation
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_vercel_builds')
 const FROM = process.env.FROM_EMAIL || 'noreply@virasat.in'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
