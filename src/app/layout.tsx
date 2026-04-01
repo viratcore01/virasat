@@ -42,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <Toaster
           position="bottom-right"
+          /* Vercel Redeploy Trigger: Verified correct CustomCursor JSX placement */
           toastOptions={{
             style: {
               background: '#0D1B2A',
