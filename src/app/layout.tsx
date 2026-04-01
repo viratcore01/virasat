@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Cormorant_Garamond, JetBrains_Mono, Outfit } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
+import CustomCursor from '@/components/custom-cursor'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         suppressHydrationWarning
         className="font-body bg-paper text-ink antialiased"
       >
+        <CustomCursor />
         {children}
         <Toaster position="bottom-right" />
       </body>
