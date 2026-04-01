@@ -1,24 +1,23 @@
 import type { Metadata } from 'next'
 import { Cormorant_Garamond, JetBrains_Mono, Outfit } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
+import CustomCursor from '@/components/CustomCursor'
 import './globals.css'
 
-const displayFont = Cormorant_Garamond({
+const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
   style: ['normal', 'italic'],
   variable: '--font-display',
 })
 
-const bodyFont = Outfit({
+const outfit = Outfit({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
   variable: '--font-body',
 })
 
-const monoFont = JetBrains_Mono({
+const jetbrains = JetBrains_Mono({
   subsets: ['latin'],
-  weight: ['400', '500'],
   variable: '--font-mono',
 })
 
@@ -30,11 +29,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${cormorant.variable} ${outfit.variable} ${jetbrains.variable}`}
+    >
       <body
         suppressHydrationWarning
-        className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} font-body bg-paper text-ink antialiased`}
+        className="font-body bg-paper text-ink antialiased"
       >
+        <CustomCursor />
         {children}
         <Toaster
           position="bottom-right"
