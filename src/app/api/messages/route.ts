@@ -5,6 +5,7 @@ import { Message } from '@/models/index'
 import { getCurrentUser } from '@/lib/auth'
 import { ok, created, unauthorized, serverError, badRequest } from '@/lib/api'
 import { z } from 'zod'
+import { encryptDeliveryText } from '@/lib/deliveryCrypto'
 
 const MessageSchema = z.object({
   type: z.enum(['video', 'letter', 'voice']),
@@ -14,6 +15,7 @@ const MessageSchema = z.object({
   triggerDate: z.string().optional(),
   encryptedContentUrl: z.string().optional(),
   encryptedText: z.string().optional(),
+  deliveryText: z.string().optional(),
 })
 
 export async function GET() {
@@ -38,8 +40,9 @@ export async function POST(req: NextRequest) {
     const parsed = MessageSchema.safeParse(body)
     if (!parsed.success) return badRequest(parsed.error.errors[0].message)
 
-    if (parsed.data.type === 'letter' && !parsed.data.encryptedText) {
-      return badRequest('Letter content is required')
+    if (parsed.data.type === 'letter') {
+      if (!parsed.data.encryptedText) return badRequest('Letter content is required')
+      if (!parsed.data.deliveryText) return badRequest('Delivery text is required')
     }
     if ((parsed.data.type === 'video' || parsed.data.type === 'voice') && !parsed.data.encryptedContentUrl) {
       return badRequest('Media upload is required')
@@ -49,9 +52,12 @@ export async function POST(req: NextRequest) {
       return badRequest('Trigger date is required for date-locked messages')
     }
 
+    const deliveryText = parsed.data.deliveryText ? encryptDeliveryText(parsed.data.deliveryText) : undefined
+
     const message = await Message.create({
       userId: user.id,
       ...parsed.data,
+      deliveryText,
       delivered: false,
     })
 

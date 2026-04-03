@@ -5,6 +5,7 @@ import { Beneficiary } from '@/models/index'
 import { getCurrentUser } from '@/lib/auth'
 import { ok, created, unauthorized, serverError, badRequest } from '@/lib/api'
 import { z } from 'zod'
+import crypto from 'crypto'
 
 const BeneficiarySchema = z.object({
   name: z.string().min(1).max(100),
@@ -38,7 +39,8 @@ export async function POST(req: NextRequest) {
     const existing = await Beneficiary.findOne({ userId: user.id, email: parsed.data.email })
     if (existing) return badRequest('Beneficiary with this email already exists')
 
-    const beneficiary = await Beneficiary.create({ userId: user.id, ...parsed.data })
+    const deliveryToken = crypto.randomBytes(32).toString('base64url')
+    const beneficiary = await Beneficiary.create({ userId: user.id, deliveryToken, ...parsed.data })
     return created(beneficiary, 'Beneficiary added')
   } catch (err) {
     return serverError(err)

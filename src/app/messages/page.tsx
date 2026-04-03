@@ -67,6 +67,7 @@ export default function MessagesPage() {
           triggerType: form.triggerType,
           triggerDate: form.triggerDate || undefined,
           encryptedText,
+          deliveryText: form.type === 'letter' ? form.text : undefined,
           encryptedContentUrl: form.contentUrl || undefined,
         })
       })

@@ -9,6 +9,7 @@ export interface BeneficiaryDocument extends Document {
   email: string
   phone: string
   relationship: string
+  deliveryToken?: string
   createdAt: Date
 }
 
@@ -18,9 +19,11 @@ const BeneficiarySchema = new Schema<BeneficiaryDocument>({
   email: { type: String, required: true, lowercase: true },
   phone: { type: String, required: true },
   relationship: { type: String, required: true },
+  deliveryToken: { type: String, default: '' },
 }, { timestamps: true })
 
 BeneficiarySchema.index({ userId: 1 })
+BeneficiarySchema.index({ deliveryToken: 1 })
 
 export const Beneficiary = mongoose.models.Beneficiary ||
   mongoose.model<BeneficiaryDocument>('Beneficiary', BeneficiarySchema)
@@ -70,6 +73,7 @@ export interface MessageDocument extends Document {
   triggerDate?: Date
   encryptedContentUrl?: string
   encryptedText?: string
+  deliveryText?: string
   delivered: boolean
   deliveredAt?: Date
   createdAt: Date
@@ -84,6 +88,7 @@ const MessageSchema = new Schema<MessageDocument>({
   triggerDate: { type: Date },
   encryptedContentUrl: { type: String },
   encryptedText: { type: String },
+  deliveryText: { type: String },
   delivered: { type: Boolean, default: false },
   deliveredAt: { type: Date },
 }, { timestamps: true })

@@ -103,3 +103,16 @@ export async function sendOwnerVaultTriggeredWhatsApp(user: {
 
   return sendWhatsAppMessage(user.phone, message)
 }
+
+// â”€â”€â”€ FINAL MESSAGE DELIVERY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export async function sendFinalMessageDeliveryWhatsApp(beneficiary: {
+  name: string
+  phone: string
+  ownerName: string
+  deliveryUrl: string
+}): Promise<boolean> {
+  const firstName = beneficiary.name.split(' ')[0]
+  const message = `Virasat — Final Message\n\nHi ${firstName}, ${beneficiary.ownerName} left a final message for you.\n\nOpen here:\n${beneficiary.deliveryUrl}\n\nPlease keep this link private.`
+  return sendWhatsAppMessage(beneficiary.phone, message)
+}

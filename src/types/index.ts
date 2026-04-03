@@ -53,6 +53,7 @@ export interface IBeneficiary {
   email: string
   phone: string
   relationship: string
+  deliveryToken?: string
   createdAt: string
 }
 
@@ -197,6 +198,7 @@ export interface IMessage {
   triggerDate?: string        // if on_date
   encryptedContentUrl?: string // for video/voice
   encryptedText?: string      // for letter
+  deliveryText?: string       // encrypted for delivery (server-side)
   delivered: boolean
   deliveredAt?: string
   createdAt: string

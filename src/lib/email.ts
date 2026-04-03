@@ -195,3 +195,38 @@ export async function sendVaultDeliveryEmail(beneficiary: {
     `
   })
 }
+
+// â”€â”€â”€ FINAL MESSAGE DELIVERY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export async function sendFinalMessageDeliveryEmail(beneficiary: {
+  name: string
+  email: string
+  ownerName: string
+  deliveryUrl: string
+  count: number
+}) {
+  return resend.emails.send({
+    from: FROM,
+    to: beneficiary.email,
+    subject: `${beneficiary.ownerName} left you a final message â€” Virasat`,
+    html: `
+      <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <p style="color: #2C2C2C; font-size: 17px;">Dear ${beneficiary.name},</p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          ${beneficiary.ownerName} left ${beneficiary.count} final message${beneficiary.count === 1 ? '' : 's'} for you.
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${beneficiary.deliveryUrl}" style="background: #C9A84C; color: #0D1B2A; padding: 14px 36px; text-decoration: none; font-size: 15px; font-weight: bold; display: inline-block; letter-spacing: 1px;">
+            Open Your Messages
+          </a>
+        </div>
+        <p style="color: #6B7280; font-size: 12px; text-align: center;">
+          This link is private. Please do not share it.
+        </p>
+      </div>
+    `
+  })
+}
