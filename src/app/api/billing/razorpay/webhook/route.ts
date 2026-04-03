@@ -3,8 +3,10 @@ import crypto from 'crypto'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/User'
 import { ok, badRequest } from '@/lib/api'
+import { FREE_ONLY_MODE } from '@/lib/flags'
 
 export async function POST(req: Request) {
+  if (FREE_ONLY_MODE) return ok({ received: true, skipped: true })
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET
   if (!secret) return badRequest('Razorpay webhook not configured')
 

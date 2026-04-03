@@ -6,6 +6,7 @@ import { encrypt, decrypt, getSessionKey } from '@/lib/crypto'
 import { VaultCategory, VaultItemData } from '@/types'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { FREE_ONLY_MODE } from '@/lib/flags-client'
 
 const CATEGORIES = [
   { key: 'bank_account', label: 'Bank Account', icon: '🏦' },
@@ -174,6 +175,10 @@ export default function VaultPage() {
   }
 
   const startSubscription = async () => {
+    if (FREE_ONLY_MODE) {
+      toast.error('Payments are disabled in free-only mode')
+      return
+    }
     try {
       const ok = await loadRazorpay()
       if (!ok) { toast.error('Razorpay failed to load'); return }
@@ -230,7 +235,7 @@ export default function VaultPage() {
 
   const filtered = filterCat === 'all' ? items : items.filter(i => i.category === filterCat)
   const isPro = user?.subscriptionStatus === 'active'
-  const limitReached = !isPro && items.length >= 5
+  const limitReached = !FREE_ONLY_MODE && !isPro && items.length >= 5
 
   if (loading) return (
     <div className="min-h-screen vault-bg flex items-center justify-center">
@@ -265,7 +270,7 @@ export default function VaultPage() {
 
       {/* Main */}
       <div className="ml-64 flex-1 p-10">
-        {!isPro && (
+        {!FREE_ONLY_MODE && !isPro && (
           <div className="border border-gold/30 bg-gold/5 p-4 mb-6 flex items-center justify-between">
             <div>
               <p className="font-mono text-gold/70 text-xs tracking-wider">FREE PLAN</p>

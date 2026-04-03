@@ -155,7 +155,7 @@ export default function SettingsPage() {
             )}
 
             <div className="space-y-5">
-              {[{ key: 'name', label: 'Full Name', placeholder: 'Suresh Sharma' }, { key: 'email', label: 'Email', placeholder: 'suresh@gmail.com' }, { key: 'phone', label: 'Phone (WhatsApp)', placeholder: '9876543210' }, { key: 'relationship', label: 'Relationship', placeholder: 'Brother / Friend / Spouse' }].map(f => (
+              {[{ key: 'name', label: 'Full Name', placeholder: 'Suresh Sharma' }, { key: 'email', label: 'Email', placeholder: 'suresh@gmail.com' }, { key: 'phone', label: 'Phone (notifications)', placeholder: '9876543210' }, { key: 'relationship', label: 'Relationship', placeholder: 'Brother / Friend / Spouse' }].map(f => (
                 <div key={f.key}>
                   <label className="font-mono text-ash/50 text-xs tracking-[0.15em] uppercase block mb-2">{f.label}</label>
                   <input value={(execForm as any)[f.key]} onChange={e => setExecForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder} className="virasat-input" />
@@ -212,7 +212,7 @@ export default function SettingsPage() {
         {tab === 'checkin' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg">
             <h2 className="font-display text-2xl mb-3">Check-in Frequency</h2>
-            <p className="text-ash text-sm leading-relaxed mb-8">How often should we ping you on WhatsApp to confirm you&apos;re okay? If you miss 3 consecutive check-ins, your executor will be notified.</p>
+            <p className="text-ash text-sm leading-relaxed mb-8">How often should we ping you to confirm you&apos;re okay? If you miss 3 consecutive check-ins, your executor will be notified.</p>
 
             <div className="space-y-3 mb-8">
               {[{ v: 'weekly', l: 'Every week', d: 'Recommended — highest safety. Miss 3 = 3 weeks before trigger.' }, { v: 'fortnightly', l: 'Every 2 weeks', d: 'Good balance. Miss 3 = 6 weeks before trigger.' }, { v: 'monthly', l: 'Every month', d: 'Minimal. Miss 3 = 3 months before trigger.' }].map(opt => (

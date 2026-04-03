@@ -159,7 +159,7 @@ export default function SignupPage() {
                       {errors.email && <p className="text-ember text-xs mt-1 font-mono">{errors.email.message}</p>}
                     </div>
                     <div>
-                      <input {...register('phone')} placeholder="Phone number (WhatsApp)" className="virasat-input" />
+                      <input {...register('phone')} placeholder="Phone number (optional)" className="virasat-input" />
                       {errors.phone && <p className="text-ember text-xs mt-1 font-mono">{errors.phone.message}</p>}
                     </div>
                     <div>

@@ -228,7 +228,7 @@ export default function HomePage() {
           {[
             { num: '01', title: 'Fill Your Vault', desc: 'Add your bank accounts, FDs, crypto wallets, gold, insurance, property — everything encrypted in your browser. We never see your data.' },
             { num: '02', title: 'Assign to Family', desc: 'Tell us who gets what. Your FD goes to your wife. Your crypto to your son. Your letters to your daughter on her 18th birthday.' },
-            { num: '03', title: 'Weekly Check-in', desc: 'Every week, one WhatsApp. One tap. That\'s it. Miss 3 times and your Executor gets notified.' },
+            { num: '03', title: 'Weekly Check-in', desc: 'Every week, one ping. One tap. That\'s it. Miss 3 times and your Executor gets notified.' },
             { num: '04', title: 'Executor Verifies', desc: 'Your trusted Executor uploads the death certificate. A 30-day waiting period begins to prevent fraud.' },
             { num: '05', title: 'Family Receives', desc: 'Everyone gets exactly what you intended. Your letters are delivered. Your assets are documented. Your family is okay.' },
           ].map((step, i) => (

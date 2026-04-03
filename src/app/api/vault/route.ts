@@ -5,6 +5,7 @@ import { VaultItem } from '@/models/index'
 import { User } from '@/models/User'
 import { getCurrentUser } from '@/lib/auth'
 import { ok, created, unauthorized, badRequest, serverError } from '@/lib/api'
+import { FREE_ONLY_MODE } from '@/lib/flags'
 import { z } from 'zod'
 
 const VaultItemSchema = z.object({
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     const dbUser = await User.findById(user.id)
       .select('subscriptionStatus')
       .lean<{ subscriptionStatus?: string } | null>()
-    const isPro = dbUser?.subscriptionStatus === 'active'
+    const isPro = FREE_ONLY_MODE || dbUser?.subscriptionStatus === 'active'
     if (!isPro) {
       const count = await VaultItem.countDocuments({ userId: user.id })
       if (count >= 5) {

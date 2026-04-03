@@ -1,8 +1,21 @@
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN!
-const PHONE_ID = process.env.WHATSAPP_PHONE_ID!
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL!
+import { WHATSAPP_CONFIGURED } from '@/lib/flags'
+
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || ''
+const PHONE_ID = process.env.WHATSAPP_PHONE_ID || ''
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+let warnedMissing = false
+
+function ensureWhatsAppEnabled() {
+  if (WHATSAPP_CONFIGURED) return true
+  if (!warnedMissing) {
+    console.warn('WhatsApp disabled: missing WHATSAPP_TOKEN or WHATSAPP_PHONE_ID')
+    warnedMissing = true
+  }
+  return false
+}
 
 async function sendWhatsAppMessage(to: string, message: string): Promise<boolean> {
+  if (!ensureWhatsAppEnabled()) return false
   // Format Indian numbers: 91XXXXXXXXXX
   const formatted = to.startsWith('+') ? to.slice(1) : to.startsWith('91') ? to : `91${to}`
 

@@ -4,11 +4,13 @@ import { connectDB } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { User } from '@/models/User'
 import { ok, unauthorized, badRequest, serverError } from '@/lib/api'
+import { FREE_ONLY_MODE } from '@/lib/flags'
 
 export async function POST(req: Request) {
   try {
     const authUser = getCurrentUser()
     if (!authUser) return unauthorized()
+    if (FREE_ONLY_MODE) return badRequest('Payments are disabled in free-only mode')
 
     const keySecret = process.env.RAZORPAY_KEY_SECRET
     if (!keySecret) return badRequest('Razorpay is not configured')
