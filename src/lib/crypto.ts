@@ -59,42 +59,55 @@ export function generateSalt(): string {
  * Returns: base64(iv) + ":" + base64(ciphertext)
  */
 export async function encrypt(plaintext: string, key: CryptoKey): Promise<string> {
-  const encoder = new TextEncoder()
-  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH))
-  const data = encoder.encode(plaintext)
+  try {
+    const encoder = new TextEncoder()
+    const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH))
+    const data = encoder.encode(plaintext)
 
-  const ciphertext = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    data
-  )
+    const ciphertext = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      data
+    )
 
-  return `${bufferToBase64(iv)}:${bufferToBase64(new Uint8Array(ciphertext))}`
+    return `${bufferToBase64(iv)}:${bufferToBase64(new Uint8Array(ciphertext))}`
+  } catch (error) {
+    console.error('Encryption failed:', error)
+    throw new Error('Failed to encrypt data. Please check your encryption key.')
+  }
 }
 
 /**
  * Decrypts AES-256-GCM encrypted data
  */
 export async function decrypt(encryptedData: string, key: CryptoKey): Promise<string> {
-  const [ivBase64, ciphertextBase64] = encryptedData.split(':')
+  try {
+    const [ivBase64, ciphertextBase64] = encryptedData.split(':')
 
-  if (!ivBase64 || !ciphertextBase64) {
-    throw new Error('Invalid encrypted data format')
+    if (!ivBase64 || !ciphertextBase64) {
+      throw new Error('Invalid encrypted data format')
+    }
+
+    const iv = base64ToBuffer(ivBase64)
+    const ciphertext = base64ToBuffer(ciphertextBase64)
+    const normalizedIv = new Uint8Array(iv)
+    const normalizedCiphertext = new Uint8Array(ciphertext)
+    const decoder = new TextDecoder()
+
+    const plaintext = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: normalizedIv },
+      key,
+      normalizedCiphertext
+    )
+
+    return decoder.decode(plaintext)
+  } catch (error) {
+    console.error('Decryption failed:', error)
+    if (error instanceof Error && error.message.includes('Invalid encrypted data format')) {
+      throw error
+    }
+    throw new Error('Failed to decrypt data. Please check your encryption key or try logging in again.')
   }
-
-  const iv = base64ToBuffer(ivBase64)
-  const ciphertext = base64ToBuffer(ciphertextBase64)
-  const normalizedIv = new Uint8Array(iv)
-  const normalizedCiphertext = new Uint8Array(ciphertext)
-  const decoder = new TextDecoder()
-
-  const plaintext = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv: normalizedIv },
-    key,
-    normalizedCiphertext
-  )
-
-  return decoder.decode(plaintext)
 }
 
 /**
@@ -119,9 +132,14 @@ export async function decryptObject<T>(encryptedData: string, key: CryptoKey): P
  * We store the raw key bytes, not the CryptoKey object
  */
 export async function storeSessionKey(key: CryptoKey, userId: string): Promise<void> {
-  const exported = await crypto.subtle.exportKey('raw', key)
-  const keyBase64 = bufferToBase64(new Uint8Array(exported))
-  sessionStorage.setItem(`virasat_key_${userId}`, keyBase64)
+  try {
+    const exported = await crypto.subtle.exportKey('raw', key)
+    const keyBase64 = bufferToBase64(new Uint8Array(exported))
+    sessionStorage.setItem(`virasat_key_${userId}`, keyBase64)
+  } catch (error) {
+    console.error('Failed to store session key:', error)
+    throw new Error('Failed to store encryption key. Please try logging in again.')
+  }
 }
 
 /**
@@ -138,10 +156,13 @@ export async function getSessionKey(userId: string): Promise<CryptoKey | null> {
       'raw',
       normalizedKeyBuffer,
       { name: 'AES-GCM', length: KEY_LENGTH },
-      false,
+      true, // Make extractable so we can store it again if needed
       ['encrypt', 'decrypt']
     )
-  } catch {
+  } catch (error) {
+    console.error('Failed to import session key:', error)
+    // Clear corrupted key
+    sessionStorage.removeItem(`virasat_key_${userId}`)
     return null
   }
 }
