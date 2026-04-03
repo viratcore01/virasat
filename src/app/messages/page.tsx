@@ -146,6 +146,34 @@ export default function MessagesPage() {
     void fetchData()
   }
 
+  const formatDate = (value?: string) => {
+    if (!value) return 'Unknown date'
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return 'Unknown date'
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  const getDeliveryMeta = (msg: any) => {
+    if (msg.delivered) {
+      const deliveredAt = msg.deliveredAt ? formatDate(msg.deliveredAt) : 'Delivered'
+      return {
+        status: 'Delivered',
+        detail: msg.deliveredAt ? `Delivered on ${deliveredAt}` : 'Delivered',
+        className: 'text-sage',
+      }
+    }
+    if (msg.triggerType === 'on_date') {
+      const dateLabel = msg.triggerDate ? formatDate(msg.triggerDate) : 'Unknown date'
+      const isOverdue = msg.triggerDate ? new Date(msg.triggerDate).getTime() < Date.now() : false
+      return {
+        status: isOverdue ? 'Overdue' : 'Scheduled',
+        detail: isOverdue ? `Overdue since ${dateLabel}` : `Scheduled for ${dateLabel}`,
+        className: isOverdue ? 'text-ember' : 'text-gold/60',
+      }
+    }
+    return { status: 'Pending', detail: 'Awaiting verification', className: 'text-gold/50' }
+  }
+
   if (loading) return <div className="min-h-screen vault-bg flex items-center justify-center"><div className="w-12 h-12 border border-gold/40 rotate-45 animate-spin" /></div>
 
   return (
@@ -216,6 +244,39 @@ export default function MessagesPage() {
             })}
           </div>
         )}
+
+        <div className="mt-12">
+          <p className="font-mono text-ash/50 text-xs tracking-[0.3em] uppercase mb-2">Delivery Status</p>
+          <div className="vault-card p-6">
+            {messages.length === 0 ? (
+              <p className="text-gold/40 text-sm">No delivery history yet.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {messages.map(msg => {
+                  const ben = beneficiaries.find(b => b._id === msg.assignedTo)
+                  const meta = getDeliveryMeta(msg)
+                  const triggerLabel = msg.triggerType === 'on_death'
+                    ? 'After verification'
+                    : `On ${formatDate(msg.triggerDate)}`
+                  return (
+                    <div key={`status-${msg._id}`} className="border border-gold/15 p-4 flex items-start justify-between gap-6">
+                      <div>
+                        <p className="text-paper/90 font-medium mb-1">{msg.title}</p>
+                        <p className="font-mono text-gold/35 text-xs">
+                          To: {ben?.name || 'Unknown'} | Type: {msg.type} | Trigger: {triggerLabel}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-mono text-xs ${meta.className}`}>{meta.status}</p>
+                        <p className="font-mono text-gold/40 text-xs">{meta.detail}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Add modal */}
