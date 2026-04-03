@@ -1,8 +1,10 @@
-import { Resend } from 'resend'
+import sgMail from '@sendgrid/mail'
 
-// Provide a dummy fallback so Vercel builds don't crash when RESEND_API_KEY is undefined during static compilation
-const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_vercel_builds')
-const FROM = process.env.FROM_EMAIL || 'noreply@virasat.in'
+// Provide a dummy fallback so Vercel builds don't crash when SENDGRID_API_KEY is undefined during static compilation
+const apiKey = process.env.SENDGRID_API_KEY || 'SG.dummy_key_for_vercel_builds'
+sgMail.setApiKey(apiKey)
+
+const FROM = process.env.FROM_EMAIL || 'noreply@virasat.dev'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 // ─── EXECUTOR ADDED ──────────────────────────────────────────────────────────
@@ -12,9 +14,9 @@ export async function sendExecutorWelcomeEmail(executor: {
   email: string
   ownerName: string
 }) {
-  return resend.emails.send({
-    from: FROM,
+  const msg = {
     to: executor.email,
+    from: FROM,
     subject: `${executor.ownerName} has named you as their Virasat Executor`,
     html: `
       <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
@@ -44,10 +46,53 @@ export async function sendExecutorWelcomeEmail(executor: {
         </div>
       </div>
     `
-  })
+  }
+  return sgMail.send(msg)
 }
 
-// ─── CHECKIN REMINDER ────────────────────────────────────────────────────────
+// ─── MISSED CHECK-IN REMINDER ───────────────────────────────────────────────
+
+export async function sendMissedCheckinEmail(user: {
+  name: string
+  email: string
+  token: string
+  missCount: number
+}) {
+  const confirmUrl = `${APP_URL}/checkin/confirm?token=${user.token}`
+  const msg = {
+    to: user.email,
+    from: FROM,
+    subject: `URGENT: Virasat Check-in Overdue — ${user.name}`,
+    html: `
+      <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <div style="background: #8B2635; padding: 16px; text-align: center; margin-bottom: 24px;">
+          <p style="color: white; margin: 0; font-size: 15px; font-weight: bold;">MISSED CHECK-IN ALERT</p>
+        </div>
+        <p style="color: #2C2C2C; font-size: 17px;">${user.name},</p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          You have missed ${user.missCount} consecutive check-in${user.missCount === 1 ? '' : 's'}. This is concerning for your loved ones.
+        </p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          Please confirm you're okay by clicking below:
+        </p>
+        <div style="text-align: center; margin: 40px 0;">
+          <a href="${confirmUrl}" style="background: #C9A84C; color: #0D1B2A; padding: 16px 48px; text-decoration: none; font-size: 16px; font-weight: bold; display: inline-block; letter-spacing: 1px;">
+            ✓ I'm Okay — Confirm Now
+          </a>
+        </div>
+        <div style="background: #FFF8EC; padding: 16px; border-left: 4px solid #C9A84C; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #8B6914;">
+            <strong>If you're traveling or in hospital:</strong> You can snooze check-ins for up to 30 days from your dashboard.
+          </p>
+        </div>
+      </div>
+    `
+  }
+  return sgMail.send(msg)
+}
 
 export async function sendCheckinEmail(user: {
   name: string
@@ -55,9 +100,9 @@ export async function sendCheckinEmail(user: {
   token: string
 }) {
   const confirmUrl = `${APP_URL}/checkin/confirm?token=${user.token}`
-  return resend.emails.send({
-    from: FROM,
+  const msg = {
     to: user.email,
+    from: FROM,
     subject: `Virasat Check-in — Are you okay, ${user.name.split(' ')[0]}?`,
     html: `
       <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
@@ -77,7 +122,8 @@ export async function sendCheckinEmail(user: {
         </p>
       </div>
     `
-  })
+  }
+  return sgMail.send(msg)
 }
 
 // ─── MISS 2 — EMERGENCY CONTACT ──────────────────────────────────────────────
@@ -89,9 +135,9 @@ export async function sendEmergencyContactEmail(contact: {
   ownerPhone: string
   appUrl: string
 }) {
-  return resend.emails.send({
-    from: FROM,
+  const msg = {
     to: contact.email,
+    from: FROM,
     subject: `Please check on ${contact.ownerName} — Virasat`,
     html: `
       <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
@@ -113,7 +159,8 @@ export async function sendEmergencyContactEmail(contact: {
         </div>
       </div>
     `
-  })
+  }
+  return sgMail.send(msg)
 }
 
 // ─── MISS 3 — EXECUTOR NOTIFICATION ─────────────────────────────────────────
@@ -125,9 +172,9 @@ export async function sendExecutorTriggerEmail(executor: {
   token: string
 }) {
   const executorUrl = `${APP_URL}/executor/${executor.token}`
-  return resend.emails.send({
-    from: FROM,
+  const msg = {
     to: executor.email,
+    from: FROM,
     subject: `URGENT: ${executor.ownerName}'s Virasat vault has been triggered`,
     html: `
       <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
@@ -156,7 +203,8 @@ export async function sendExecutorTriggerEmail(executor: {
         </div>
       </div>
     `
-  })
+  }
+  return sgMail.send(msg)
 }
 
 // ─── VAULT DELIVERY EMAIL ────────────────────────────────────────────────────
@@ -167,9 +215,9 @@ export async function sendVaultDeliveryEmail(beneficiary: {
   ownerName: string
   items: Array<{ title: string; category: string }>
 }) {
-  return resend.emails.send({
-    from: FROM,
+  const msg = {
     to: beneficiary.email,
+    from: FROM,
     subject: `${beneficiary.ownerName} left something for you — Virasat`,
     html: `
       <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
@@ -193,7 +241,8 @@ export async function sendVaultDeliveryEmail(beneficiary: {
         </p>
       </div>
     `
-  })
+  }
+  return sgMail.send(msg)
 }
 
 // â”€â”€â”€ FINAL MESSAGE DELIVERY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -205,7 +254,7 @@ export async function sendFinalMessageDeliveryEmail(beneficiary: {
   deliveryUrl: string
   count: number
 }) {
-  return resend.emails.send({
+  return sgMail.send({
     from: FROM,
     to: beneficiary.email,
     subject: `${beneficiary.ownerName} left you a final message â€” Virasat`,
@@ -225,6 +274,42 @@ export async function sendFinalMessageDeliveryEmail(beneficiary: {
         </div>
         <p style="color: #6B7280; font-size: 12px; text-align: center;">
           This link is private. Please do not share it.
+        </p>
+      </div>
+    `
+  })
+}
+
+// â”€â”€â”€ MISSED CHECK-IN EMAIL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export async function sendMissedCheckinEmail(user: {
+  name: string
+  email: string
+  token: string
+  missCount: number
+}) {
+  const confirmUrl = `${APP_URL}/checkin/confirm?token=${user.token}`
+  const snoozeUrl = `${APP_URL}/settings/snooze`
+  return resend.emails.send({
+    from: FROM,
+    to: user.email,
+    subject: `Reminder: Please confirm your Virasat check-in`,
+    html: `
+      <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <p style="color: #2C2C2C; font-size: 17px;">Hi ${user.name.split(' ')[0]},</p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          You missed your Virasat check-in. Please confirm you are okay so we don’t alert your emergency contact.
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${confirmUrl}" style="background: #C9A84C; color: #0D1B2A; padding: 14px 36px; text-decoration: none; font-size: 15px; font-weight: bold; display: inline-block; letter-spacing: 1px;">
+            Confirm I’m Okay
+          </a>
+        </div>
+        <p style="color: #6B7280; font-size: 14px; text-align: center;">
+          Travelling or in hospital? <a href="${snoozeUrl}" style="color: #C9A84C;">Snooze check-ins</a>
         </p>
       </div>
     `

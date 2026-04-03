@@ -4,8 +4,7 @@ import { connectDB } from '@/lib/db'
 import { User } from '@/models/User'
 import { Executor } from '@/models/Executor'
 import { CheckIn } from '@/models/index'
-import { sendCheckinEmail, sendEmergencyContactEmail, sendExecutorTriggerEmail } from '@/lib/email'
-import { sendCheckInWhatsApp, sendMissedCheckInWhatsApp, sendEmergencyContactWhatsApp, sendExecutorTriggerWhatsApp } from '@/lib/whatsapp'
+import { sendCheckinEmail, sendMissedCheckinEmail, sendEmergencyContactEmail, sendExecutorTriggerEmail } from '@/lib/email'
 import { generateSecureToken } from '@/lib/crypto'
 import { ok, serverError } from '@/lib/api'
 import { subDays, addDays } from 'date-fns'
@@ -65,7 +64,6 @@ export async function POST(req: NextRequest) {
 
           const userData = { name: user.name, phone: user.phone, email: user.email, token }
           await Promise.allSettled([
-            sendCheckInWhatsApp(userData),
             sendCheckinEmail(userData),
           ])
           results.pinged++
@@ -76,7 +74,7 @@ export async function POST(req: NextRequest) {
           await CheckIn.create({ userId: user._id, token, scheduledFor: now, missed: true })
 
           await Promise.allSettled([
-            sendMissedCheckInWhatsApp({ name: user.name, phone: user.phone, token, missCount: 1 }),
+            sendMissedCheckinEmail({ name: user.name, email: user.email, token, missCount: 1 }),
           ])
           results.miss1++
 
@@ -86,12 +84,6 @@ export async function POST(req: NextRequest) {
           const executor = await Executor.findOne({ userId: user._id })
           if (executor) {
             await Promise.allSettled([
-              sendEmergencyContactWhatsApp({
-                name: executor.name,
-                phone: executor.phone,
-                ownerName: user.name,
-                ownerPhone: user.phone,
-              }),
               sendEmergencyContactEmail({
                 name: executor.name,
                 email: executor.email,
@@ -119,12 +111,6 @@ export async function POST(req: NextRequest) {
               )
 
               await Promise.allSettled([
-                sendExecutorTriggerWhatsApp({
-                  name: executor.name,
-                  phone: executor.phone,
-                  ownerName: user.name,
-                  token: executor.uniqueToken,
-                }),
                 sendExecutorTriggerEmail({
                   name: executor.name,
                   email: executor.email,
@@ -148,4 +134,3 @@ export async function POST(req: NextRequest) {
     return serverError(err)
   }
 }
-

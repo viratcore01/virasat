@@ -255,6 +255,7 @@ export interface AuthUser {
   email: string
   name: string
   encryptionSalt: string
+  keyCheck?: string
   status: UserStatus
 }
 

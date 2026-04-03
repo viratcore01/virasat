@@ -6,7 +6,16 @@ import { Beneficiary, ExecutorRequest, Message } from '@/models/index'
 import { User } from '@/models/User'
 import { ok, serverError } from '@/lib/api'
 import { sendFinalMessageDeliveryEmail } from '@/lib/email'
-import { sendFinalMessageDeliveryWhatsApp } from '@/lib/whatsapp'
+
+type OwnerLean = { _id: { toString: () => string }; name: string }
+type BeneficiaryLean = {
+  _id: { toString: () => string }
+  name: string
+  email: string
+  phone: string
+  relationship: string
+  deliveryToken?: string
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -83,8 +92,8 @@ export async function POST(req: NextRequest) {
     const userIds = Array.from(new Set(allMessages.map(m => m.userId.toString())))
 
     const [beneficiaries, owners] = await Promise.all([
-      Beneficiary.find({ _id: { $in: beneficiaryIds } }).lean(),
-      User.find({ _id: { $in: userIds } }).select('name').lean(),
+      Beneficiary.find({ _id: { $in: beneficiaryIds } }).lean<BeneficiaryLean[]>(),
+      User.find({ _id: { $in: userIds } }).select('name').lean<OwnerLean[]>(),
     ])
 
     const ownerById = new Map(owners.map(o => [o._id.toString(), o.name]))
@@ -101,7 +110,7 @@ export async function POST(req: NextRequest) {
       grouped.set(ben._id.toString(), entry)
     }
 
-    for (const entry of grouped.values()) {
+    for (const entry of Array.from(grouped.values())) {
       try {
         let token = entry.beneficiary.deliveryToken
         if (!token) {
@@ -119,12 +128,6 @@ export async function POST(req: NextRequest) {
             ownerName: entry.ownerName,
             deliveryUrl,
             count,
-          }),
-          sendFinalMessageDeliveryWhatsApp({
-            name: entry.beneficiary.name,
-            phone: entry.beneficiary.phone,
-            ownerName: entry.ownerName,
-            deliveryUrl,
           })
         ])
         results.notifications++

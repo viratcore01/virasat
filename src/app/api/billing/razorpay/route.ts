@@ -1,37 +1,48 @@
 export const dynamic = 'force-dynamic'
-import Razorpay from 'razorpay'
+import Stripe from 'stripe'
 import { connectDB } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { User } from '@/models/User'
 import { ok, unauthorized, badRequest, serverError } from '@/lib/api'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+  apiVersion: '2024-06-20',
+})
 
 export async function POST() {
   try {
     const authUser = getCurrentUser()
     if (!authUser) return unauthorized()
 
-    const keyId = process.env.RAZORPAY_KEY_ID
-    const keySecret = process.env.RAZORPAY_KEY_SECRET
-    const planId = process.env.RAZORPAY_PLAN_ID
+    const secretKey = process.env.STRIPE_SECRET_KEY
+    const priceId = process.env.STRIPE_PRICE_ID
 
-    if (!keyId || !keySecret || !planId) {
-      return badRequest('Razorpay is not configured')
+    if (!secretKey || !priceId) {
+      return badRequest('Stripe is not configured')
     }
 
-    const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret })
-    const subscription = await razorpay.subscriptions.create({
-      plan_id: planId,
-      customer_notify: 1,
-      total_count: 120,
+    // For development, create a test checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price: priceId,
+        quantity: 1,
+      }],
+      mode: 'subscription',
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?canceled=true`,
+      metadata: {
+        userId: authUser.id,
+      },
     })
 
     await connectDB()
     await User.updateOne(
       { _id: authUser.id },
-      { $set: { subscriptionStatus: 'pending', subscriptionId: subscription.id } }
+      { $set: { subscriptionStatus: 'pending', subscriptionId: session.id } }
     )
 
-    return ok({ subscriptionId: subscription.id, keyId })
+    return ok({ sessionId: session.id, url: session.url })
   } catch (err) {
     return serverError(err)
   }
