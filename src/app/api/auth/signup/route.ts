@@ -15,6 +15,8 @@ const SignupSchema = z.object({
   religion: z.enum(['hindu', 'muslim', 'christian', 'sikh', 'jain', 'other']),
   dob: z.string(),
   checkInFrequency: z.enum(['weekly', 'fortnightly', 'monthly']).default('weekly'),
+  encryptionSalt: z.string().optional(),
+  keyCheck: z.string().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -27,13 +29,13 @@ export async function POST(req: NextRequest) {
       return badRequest(parsed.error.errors[0].message)
     }
 
-    const { email, name, phone, password, religion, dob, checkInFrequency } = parsed.data
+    const { email, name, phone, password, religion, dob, checkInFrequency, encryptionSalt, keyCheck } = parsed.data
 
     const existing = await User.findOne({ email })
     if (existing) return badRequest('Email already registered')
 
     const passwordHash = await hashPassword(password)
-    const encryptionSalt = generateSalt()
+    const saltToStore = encryptionSalt || generateSalt()
 
     const user = await User.create({
       email,
@@ -41,7 +43,8 @@ export async function POST(req: NextRequest) {
       phone,
       password: undefined, // not stored
       passwordHash,
-      encryptionSalt,
+      encryptionSalt: saltToStore,
+      keyCheck: keyCheck || '',
       religion,
       dob,
       checkInFrequency,
@@ -55,6 +58,7 @@ export async function POST(req: NextRequest) {
       email: user.email,
       name: user.name,
       encryptionSalt: user.encryptionSalt,
+      keyCheck: user.keyCheck,
       status: user.status,
     })
 
@@ -74,4 +78,3 @@ export async function POST(req: NextRequest) {
     return serverError(err)
   }
 }
-

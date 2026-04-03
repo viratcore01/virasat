@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { deriveKey, storeSessionKey, generateSalt } from '@/lib/crypto'
+import { deriveKey, storeSessionKey, generateSalt, base64ToBuffer, encrypt } from '@/lib/crypto'
 
 const SignupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -27,6 +27,7 @@ const SignupSchema = z.object({
 type SignupForm = z.infer<typeof SignupSchema>
 
 const STEPS = ['Personal', 'Security', 'Preferences']
+const KEYCHECK_VALUE_V2 = 'virasat-key-check:v2'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -50,6 +51,10 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupForm) => {
     setLoading(true)
     try {
+      const encryptionSalt = generateSalt()
+      const key = await deriveKey(data.masterPassword, base64ToBuffer(encryptionSalt))
+      const keyCheck = await encrypt(KEYCHECK_VALUE_V2, key)
+
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,16 +66,14 @@ export default function SignupPage() {
           religion: data.religion,
           password: data.password,
           checkInFrequency: data.checkInFrequency,
+          encryptionSalt,
+          keyCheck,
         })
       })
 
       const json = await res.json()
       if (!json.success) throw new Error(json.error)
 
-      // Derive encryption key from master password + salt
-      const salt = new TextEncoder().encode(json.data.user.encryptionSalt)
-      const saltUint8 = new Uint8Array(salt.buffer)
-      const key = await deriveKey(data.masterPassword, saltUint8)
       await storeSessionKey(key, json.data.user.id)
 
       toast.success('Vault created. Welcome to Virasat.')

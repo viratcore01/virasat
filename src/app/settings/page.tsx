@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { clearSessionKey } from '@/lib/crypto'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -74,9 +75,15 @@ export default function SettingsPage() {
 
   const deleteBeneficiary = async (id: string) => {
     if (!confirm('Remove this beneficiary?')) return
-    await fetch(`/api/beneficiaries/${id}`, { method: 'DELETE' })
-    toast.success('Removed')
-    void fetchAll()
+    try {
+      const res = await fetch(`/api/beneficiaries/${id}`, { method: 'DELETE' })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error)
+      toast.success('Removed')
+      void fetchAll()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to remove')
+    }
   }
 
   const saveFrequency = async () => {
@@ -88,6 +95,12 @@ export default function SettingsPage() {
       toast.success('Check-in frequency updated')
     } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed') }
     finally { setSavingFreq(false) }
+  }
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    if (user?._id) clearSessionKey(user._id)
+    router.push('/')
   }
 
   if (loading) return <div className="min-h-screen vault-bg flex items-center justify-center"><div className="w-12 h-12 border border-gold/40 rotate-45 animate-spin" /></div>
@@ -244,7 +257,7 @@ export default function SettingsPage() {
             <div className="border border-ember/20 p-5">
               <p className="font-mono text-ember/60 text-xs tracking-wider uppercase mb-3">Danger Zone</p>
               <p className="text-ash text-sm mb-4">Remember: your master password is never stored. If you forget it, your encrypted data cannot be recovered.</p>
-              <button onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); router.push('/') }} className="text-ember/60 hover:text-ember font-mono text-xs tracking-wider transition-colors border border-ember/20 px-4 py-2">
+              <button onClick={handleLogout} className="text-ember/60 hover:text-ember font-mono text-xs tracking-wider transition-colors border border-ember/20 px-4 py-2">
                 SIGN OUT
               </button>
             </div>

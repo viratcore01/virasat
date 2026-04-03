@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
-import { deriveKey, storeSessionKey, base64ToBuffer } from '@/lib/crypto'
+import { deriveKey, storeSessionKey, base64ToBuffer, decrypt, encrypt } from '@/lib/crypto'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -12,6 +12,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [masterPassword, setMasterPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const KEYCHECK_VALUE_V1 = 'virasat-key-check:v1'
+  const KEYCHECK_VALUE_V2 = 'virasat-key-check:v2'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,8 +35,44 @@ export default function LoginPage() {
 
       // Derive encryption key
       const saltBuffer = base64ToBuffer(json.data.user.encryptionSalt)
-      const key = await deriveKey(masterPassword, saltBuffer)
-      await storeSessionKey(key, json.data.user.id)
+      const legacySaltBuffer = new TextEncoder().encode(json.data.user.encryptionSalt)
+      const modernKey = await deriveKey(masterPassword, saltBuffer)
+      const legacyKey = await deriveKey(masterPassword, legacySaltBuffer)
+
+      let chosenKey: CryptoKey | null = null
+
+      if (json.data.user.keyCheck) {
+        try {
+          const modernCheck = await decrypt(json.data.user.keyCheck, modernKey)
+          if (modernCheck === KEYCHECK_VALUE_V2) {
+            chosenKey = modernKey
+          }
+        } catch {}
+
+        if (!chosenKey) {
+          try {
+            const legacyCheck = await decrypt(json.data.user.keyCheck, legacyKey)
+            if (legacyCheck === KEYCHECK_VALUE_V1) {
+              chosenKey = legacyKey
+            }
+          } catch {}
+        }
+
+        if (!chosenKey) {
+          await fetch('/api/auth/logout', { method: 'POST' })
+          throw new Error('Master password incorrect')
+        }
+      } else {
+        chosenKey = legacyKey
+        const keyCheck = await encrypt(KEYCHECK_VALUE_V1, legacyKey)
+        await fetch('/api/auth/keycheck', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keyCheck }),
+        })
+      }
+
+      await storeSessionKey(chosenKey, json.data.user.id)
 
       toast.success('Welcome back.')
       router.push('/dashboard')

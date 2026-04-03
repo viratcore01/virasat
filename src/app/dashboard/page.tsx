@@ -4,8 +4,10 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
+import { clearSessionKey } from '@/lib/crypto'
 
 interface DashStats {
+  userId: string
   vaultItems: number
   messages: number
   beneficiaries: number
@@ -58,6 +60,7 @@ export default function DashboardPage() {
       ])
 
       setStats({
+        userId: user.data?._id || '',
         vaultItems: vault.data?.length ?? 0,
         messages: messages.data?.length ?? 0,
         beneficiaries: benef.data?.length ?? 0,
@@ -94,6 +97,7 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
+    if (stats?.userId) clearSessionKey(stats.userId)
     router.push('/')
   }
 

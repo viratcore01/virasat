@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
         name: user.name,
         encryptionSalt: user.encryptionSalt,
+        keyCheck: user.keyCheck,
         status: user.status,
       }
     }, 'Logged in')
@@ -55,4 +56,3 @@ export async function POST(req: NextRequest) {
     return serverError(err)
   }
 }
-

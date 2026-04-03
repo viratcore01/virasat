@@ -9,6 +9,7 @@ export interface UserDocument extends Document {
   dob: string
   passwordHash: string
   encryptionSalt: string
+  keyCheck?: string
   serverShare: string
   checkInFrequency: CheckInFrequency
   lastCheckIn: Date
@@ -30,6 +31,7 @@ const UserSchema = new Schema<UserDocument>({
   dob: { type: String, required: true },
   passwordHash: { type: String, required: true },
   encryptionSalt: { type: String, required: true },
+  keyCheck: { type: String, default: '' },
   serverShare: { type: String, default: '' }, // Shamir share 1
   checkInFrequency: { type: String, enum: ['weekly', 'fortnightly', 'monthly'], default: 'weekly' },
   lastCheckIn: { type: Date, default: Date.now },

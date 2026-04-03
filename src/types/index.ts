@@ -12,6 +12,7 @@ export interface IUser {
   religion: Religion
   dob: string
   encryptionSalt: string
+  keyCheck?: string
   serverShare: string       // Shamir share 1 (encrypted with server key)
   checkInFrequency: CheckInFrequency
   lastCheckIn: string
