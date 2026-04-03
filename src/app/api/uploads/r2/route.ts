@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
     const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL || process.env.R2_PUBLIC_URL
 
-    if (!endpoint || !bucket || !accessKeyId || !secretAccessKey || !publicBaseUrl) {
+    if (!endpoint || !bucket || !accessKeyId || !secretAccessKey) {
       return badRequest('R2 is not configured')
     }
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     })
 
     const uploadUrl = await getSignedUrl(client, command, { expiresIn: 600 })
-    const fileUrl = `${publicBaseUrl.replace(/\/$/, '')}/${key}`
+    const fileUrl = publicBaseUrl ? `${publicBaseUrl.replace(/\/$/, '')}/${key}` : null
 
     return ok({ uploadUrl, fileUrl, key })
   } catch (err) {

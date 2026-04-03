@@ -17,6 +17,7 @@ export default function MessagesPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving] = useState(false)
   const [viewMsg, setViewMsg] = useState<any>(null)
+  const [mediaLoading, setMediaLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState('')
 
@@ -87,8 +88,22 @@ export default function MessagesPage() {
         if (!key) { toast.error('Session expired'); return }
         text = await decrypt(msg.encryptedText, key)
       }
-      setViewMsg({ ...msg, decryptedText: text })
-    } catch { toast.error('Could not decrypt') }
+      setViewMsg({ ...msg, decryptedText: text, mediaUrl: null })
+
+      const needsMedia = !!msg.encryptedContentUrl && (msg.type === 'video' || msg.type === 'voice')
+      if (!needsMedia) { setMediaLoading(false); return }
+
+      setMediaLoading(true)
+      const mediaRes = await fetch(`/api/messages/${msg._id}/media`)
+      const mediaJson = await mediaRes.json()
+      if (!mediaJson.success) throw new Error(mediaJson.error || 'Media not available')
+
+      setViewMsg((prev: any) => prev && prev._id === msg._id ? { ...prev, mediaUrl: mediaJson.data.url } : prev)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not load media')
+    } finally {
+      setMediaLoading(false)
+    }
   }
 
   const uploadToR2 = async (file: File) => {
@@ -111,7 +126,9 @@ export default function MessagesPage() {
       })
       if (!putRes.ok) throw new Error('Upload failed')
 
-      setForm(f => ({ ...f, contentUrl: meta.data.fileUrl }))
+      const contentKey = meta?.data?.key || meta?.data?.fileUrl
+      if (!contentKey) throw new Error('Upload did not return a file key')
+      setForm(f => ({ ...f, contentUrl: contentKey }))
       setUploadStatus('Uploaded')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Upload failed')
@@ -332,22 +349,34 @@ export default function MessagesPage() {
                   <p className="font-mono text-gold/40 text-xs tracking-wider mb-1">{viewMsg.type.toUpperCase()}</p>
                   <h2 className="font-display text-2xl text-paper">{viewMsg.title}</h2>
                 </div>
-                <button onClick={() => setViewMsg(null)} className="text-gold/40 hover:text-gold text-xl">✕</button>
+                <button onClick={() => { setViewMsg(null); setMediaLoading(false) }} className="text-gold/40 hover:text-gold text-xl">✕</button>
               </div>
               {viewMsg.decryptedText && (
                 <div className="border border-gold/15 p-6" style={{ background: 'rgba(201,168,76,0.03)' }}>
                   <p className="font-display text-xl text-paper/80 leading-relaxed italic whitespace-pre-wrap">{viewMsg.decryptedText}</p>
                 </div>
               )}
-              {viewMsg.encryptedContentUrl && viewMsg.type === 'video' && (
-                <video controls className="w-full mt-4 border border-gold/15">
-                  <source src={viewMsg.encryptedContentUrl} />
-                </video>
+              {viewMsg.type === 'video' && (
+                mediaLoading ? (
+                  <p className="font-mono text-gold/40 text-xs mt-4">Loading video...</p>
+                ) : viewMsg.mediaUrl ? (
+                  <video controls className="w-full mt-4 border border-gold/15">
+                    <source src={viewMsg.mediaUrl} />
+                  </video>
+                ) : viewMsg.encryptedContentUrl ? (
+                  <p className="font-mono text-ember/60 text-xs mt-4">Video unavailable</p>
+                ) : null
               )}
-              {viewMsg.encryptedContentUrl && viewMsg.type === 'voice' && (
-                <audio controls className="w-full mt-4">
-                  <source src={viewMsg.encryptedContentUrl} />
-                </audio>
+              {viewMsg.type === 'voice' && (
+                mediaLoading ? (
+                  <p className="font-mono text-gold/40 text-xs mt-4">Loading audio...</p>
+                ) : viewMsg.mediaUrl ? (
+                  <audio controls className="w-full mt-4">
+                    <source src={viewMsg.mediaUrl} />
+                  </audio>
+                ) : viewMsg.encryptedContentUrl ? (
+                  <p className="font-mono text-ember/60 text-xs mt-4">Audio unavailable</p>
+                ) : null
               )}
               <p className="font-mono text-gold/20 text-xs mt-4">Decrypted locally · Never sent to server</p>
             </motion.div>
