@@ -1,41 +1,90 @@
 export const dynamic = 'force-dynamic'
-import crypto from 'crypto'
+import Stripe from 'stripe'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/User'
 import { ok, badRequest } from '@/lib/api'
 import { FREE_ONLY_MODE } from '@/lib/flags'
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+  apiVersion: '2024-06-20',
+})
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder'
+
 export async function POST(req: Request) {
   if (FREE_ONLY_MODE) return ok({ received: true, skipped: true })
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET
-  if (!secret) return badRequest('Razorpay webhook not configured')
 
-  const signature = req.headers.get('x-razorpay-signature') || ''
+  const sig = req.headers.get('stripe-signature') as string
   const body = await req.text()
 
-  const expected = crypto.createHmac('sha256', secret).update(body).digest('hex')
-  if (signature !== expected) return badRequest('Invalid signature')
+  let event: Stripe.Event
 
-  const payload = JSON.parse(body)
-  const event = payload.event as string
-  const subscription = payload.payload?.subscription?.entity
+  try {
+    event = stripe.webhooks.constructEvent(body, sig, endpointSecret)
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err)
+    return badRequest('Invalid signature')
+  }
 
-  if (!subscription?.id) return ok({ received: true })
+  await connectDB()
 
-  const updates: Record<string, unknown> = {}
-  if (event === 'subscription.activated' || event === 'subscription.charged') {
-    updates.subscriptionStatus = 'active'
-    if (subscription.current_end) {
-      updates.subscriptionCurrentEnd = new Date(subscription.current_end * 1000)
+  switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session
+      const userId = session.metadata?.userId
+
+      if (userId) {
+        await User.updateOne(
+          { _id: userId },
+          { $set: { subscriptionStatus: 'active' } }
+        )
+      }
+      break
     }
-  }
-  if (event === 'subscription.cancelled' || event === 'subscription.completed') {
-    updates.subscriptionStatus = 'cancelled'
-  }
 
-  if (Object.keys(updates).length > 0) {
-    await connectDB()
-    await User.updateOne({ subscriptionId: subscription.id }, { $set: updates })
+    case 'invoice.payment_succeeded': {
+      const invoice = event.data.object as Stripe.Invoice
+      const subscriptionId = invoice.subscription as string
+
+      const user = await User.findOne({ subscriptionId })
+      if (user) {
+        await User.updateOne(
+          { _id: user._id },
+          {
+            $set: {
+              subscriptionStatus: 'active',
+              subscriptionCurrentEnd: new Date(invoice.period_end * 1000)
+            }
+          }
+        )
+      }
+      break
+    }
+
+    case 'invoice.payment_failed': {
+      const invoice = event.data.object as Stripe.Invoice
+      const subscriptionId = invoice.subscription as string
+
+      const user = await User.findOne({ subscriptionId })
+      if (user) {
+        await User.updateOne(
+          { _id: user._id },
+          { $set: { subscriptionStatus: 'past_due' } }
+        )
+      }
+      break
+    }
+
+    case 'customer.subscription.deleted': {
+      const subscription = event.data.object as Stripe.Subscription
+      const user = await User.findOne({ subscriptionId: subscription.id })
+      if (user) {
+        await User.updateOne(
+          { _id: user._id },
+          { $set: { subscriptionStatus: 'cancelled' } }
+        )
+      }
+      break
+    }
   }
 
   return ok({ received: true })
