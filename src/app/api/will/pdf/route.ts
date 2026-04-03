@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
-import puppeteer from 'puppeteer'
+import chromium from '@sparticuz/chromium'
 import { badRequest, serverError } from '@/lib/api'
 
 function escapeHtml(input: string) {
@@ -36,8 +36,14 @@ export async function POST(req: Request) {
       </html>
     `
 
+    const useChromium = process.env.NODE_ENV === 'production' || !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_VERSION
+    const puppeteer = useChromium ? await import('puppeteer-core') : await import('puppeteer')
+
     const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: useChromium ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
+      defaultViewport: chromium.defaultViewport,
+      executablePath: useChromium ? await chromium.executablePath() : undefined,
+      headless: useChromium ? chromium.headless : 'new',
     })
     const page = await browser.newPage()
     await page.setContent(html, { waitUntil: 'networkidle0' })
