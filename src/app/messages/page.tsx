@@ -141,9 +141,15 @@ export default function MessagesPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this message?')) return
-    await fetch(`/api/messages/${id}`, { method: 'DELETE' })
-    toast.success('Deleted')
-    void fetchData()
+    try {
+      const res = await fetch(`/api/messages/${id}`, { method: 'DELETE' })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error)
+      toast.success('Deleted')
+      void fetchData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete')
+    }
   }
 
   const formatDate = (value?: string) => {
