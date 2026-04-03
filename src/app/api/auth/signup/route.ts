@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
       }
     }, 'Account created successfully')
   } catch (err) {
+    console.error('Signup error:', err)
     return serverError(err)
   }
 }

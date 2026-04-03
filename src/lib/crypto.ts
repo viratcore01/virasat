@@ -38,7 +38,7 @@ export async function deriveKey(masterPassword: string, salt: Uint8Array): Promi
     },
     importedKey,
     { name: 'AES-GCM', length: KEY_LENGTH },
-    false,
+    true,
     ['encrypt', 'decrypt']
   )
 }
