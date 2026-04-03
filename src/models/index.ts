@@ -159,3 +159,7 @@ ExecutorRequestSchema.index({ status: 1, unlockDate: 1 })
 
 export const ExecutorRequest = mongoose.models.ExecutorRequest ||
   mongoose.model<ExecutorRequestDocument>('ExecutorRequest', ExecutorRequestSchema)
+
+// Re-export User and Executor models
+export { User } from './User'
+export { Executor } from './Executor'

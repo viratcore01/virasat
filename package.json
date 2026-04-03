@@ -39,6 +39,7 @@
     "shamir": "^0.7.1",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
+    "stripe": "^22.0.0",
     "tailwind-merge": "^2.4.0",
     "uploadthing": "^6.13.2",
     "uuid": "^10.0.0",

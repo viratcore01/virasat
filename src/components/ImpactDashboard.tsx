@@ -121,7 +121,7 @@ export default function ImpactDashboard() {
           className="text-center mb-12"
         >
           <p className="font-mono text-gold/60 text-xs tracking-[0.3em] uppercase mb-4">Social Impact Dashboard</p>
-          <h1 className="font-display text-5xl text-ink mb-4">Virasat's Real-World Impact</h1>
+          <h1 className="font-display text-5xl text-ink mb-4">Virasat&apos;s Real-World Impact</h1>
           <p className="font-body text-ash/80 text-xl max-w-3xl mx-auto">
             Every number represents a family protected, a legacy preserved, and countless court battles prevented.
           </p>

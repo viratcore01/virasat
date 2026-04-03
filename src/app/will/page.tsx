@@ -66,6 +66,10 @@ export default function WillPage() {
     }
   }
 
+  const generateWill = async () => {
+    setGenerated(true)
+  }
+
   const downloadPdf = async () => {
     setDownloading(true)
     try {

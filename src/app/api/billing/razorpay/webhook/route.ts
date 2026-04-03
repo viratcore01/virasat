@@ -42,8 +42,12 @@ export async function POST(req: Request) {
     }
 
     case 'invoice.payment_succeeded': {
-      const invoice = event.data.object as Stripe.Invoice
-      const subscriptionId = invoice.subscription as string
+      const invoice = event.data.object as any // Stripe.Invoice
+      const subscriptionId = typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : (invoice.subscription as any)?.id
+
+      if (!subscriptionId) break
 
       const user = await User.findOne({ subscriptionId })
       if (user) {
@@ -61,8 +65,12 @@ export async function POST(req: Request) {
     }
 
     case 'invoice.payment_failed': {
-      const invoice = event.data.object as Stripe.Invoice
-      const subscriptionId = invoice.subscription as string
+      const invoice = event.data.object as any // Stripe.Invoice
+      const subscriptionId = typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : (invoice.subscription as any)?.id
+
+      if (!subscriptionId) break
 
       const user = await User.findOne({ subscriptionId })
       if (user) {

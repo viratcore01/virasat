@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     // This endpoint can be used to check subscription status
     await connectDB()
 
-    const user = await User.findById(authUser.id).select('subscriptionStatus').lean()
+    const user = await User.findById(authUser.id).select('subscriptionStatus').lean() as { subscriptionStatus: string } | null
     if (!user) return badRequest('User not found')
 
     return ok({
