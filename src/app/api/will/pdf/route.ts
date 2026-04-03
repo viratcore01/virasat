@@ -41,9 +41,9 @@ export async function POST(req: Request) {
 
     const browser = await puppeteer.launch({
       args: useChromium ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
-      defaultViewport: chromium.defaultViewport,
+      defaultViewport: { width: 1200, height: 1600 },
       executablePath: useChromium ? await chromium.executablePath() : undefined,
-      headless: useChromium ? chromium.headless : 'new',
+      headless: true,
     })
     const page = await browser.newPage()
     await page.setContent(html, { waitUntil: 'networkidle0' })

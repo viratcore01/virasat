@@ -10,6 +10,20 @@ import { ok, notFound, serverError } from '@/lib/api'
 import { decryptDeliveryText } from '@/lib/deliveryCrypto'
 
 interface Params { params: { token: string } }
+type BeneficiaryLean = {
+  _id: { toString: () => string }
+  userId: { toString: () => string }
+  name: string
+  relationship: string
+}
+type MessageLean = {
+  _id: { toString: () => string }
+  title: string
+  type: 'video' | 'voice' | 'letter'
+  deliveredAt?: Date
+  deliveryText?: string
+  encryptedContentUrl?: string
+}
 
 function getR2Client() {
   const accountId = process.env.R2_ACCOUNT_ID
@@ -55,7 +69,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const token = params.token
     if (!token) return notFound('Invalid link')
 
-    const beneficiary = await Beneficiary.findOne({ deliveryToken: token }).lean()
+    const beneficiary = await Beneficiary.findOne({ deliveryToken: token }).lean<BeneficiaryLean | null>()
     if (!beneficiary) return notFound('Invalid delivery link')
 
     const owner = await User.findById(beneficiary.userId).select('name').lean<{ name: string } | null>()
@@ -64,7 +78,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const messages = await Message.find({
       assignedTo: beneficiary._id,
       delivered: true,
-    }).sort({ deliveredAt: -1 }).lean()
+    }).sort({ deliveredAt: -1 }).lean<MessageLean[]>()
 
     const results = await Promise.all(messages.map(async msg => {
       let text: string | null = null

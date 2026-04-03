@@ -8,6 +8,11 @@ import { getCurrentUser } from '@/lib/auth'
 import { ok, unauthorized, notFound, serverError, badRequest } from '@/lib/api'
 
 interface Params { params: { id: string } }
+type MessageLean = {
+  _id: { toString: () => string }
+  type: 'video' | 'voice' | 'letter'
+  encryptedContentUrl?: string
+}
 
 function getR2Client() {
   const accountId = process.env.R2_ACCOUNT_ID
@@ -48,7 +53,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     if (!user) return unauthorized()
     await connectDB()
 
-    const msg = await Message.findOne({ _id: params.id, userId: user.id }).lean()
+    const msg = await Message.findOne({ _id: params.id, userId: user.id }).lean<MessageLean | null>()
     if (!msg) return notFound()
     if (msg.type !== 'video' && msg.type !== 'voice') return badRequest('Not a media message')
     if (!msg.encryptedContentUrl) return badRequest('No media attached')
