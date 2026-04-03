@@ -138,6 +138,7 @@ export default function DashboardPage() {
             { href: '/messages', icon: '✉', label: 'Messages' },
             { href: '/will', icon: '📜', label: 'Will Generator' },
             { href: '/settings', icon: '⚙', label: 'Settings' },
+            { href: '/impact', icon: '📊', label: 'Impact Dashboard' },
           ].map(item => (
             <Link key={item.href} href={item.href}
               className="flex items-center gap-3 px-4 py-3 text-gold/50 hover:text-gold hover:bg-gold/5 transition-all font-body text-sm tracking-wide group"
