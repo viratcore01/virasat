@@ -21,6 +21,11 @@ export interface UserDocument extends Document {
   subscriptionId?: string
   subscriptionCurrentEnd?: Date
   isDataEncrypted: boolean
+  recoveryState: 'none' | 'pending' | 'completed' | 'cancelled'
+  recoveryToken?: string
+  recoveryInitiatedAt?: Date
+  recoveryMethod?: 'user_executor' | 'user_server'
+  recoveryExpiresAt?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -44,6 +49,11 @@ const UserSchema = new Schema<UserDocument>({
   subscriptionId: { type: String },
   subscriptionCurrentEnd: { type: Date },
   isDataEncrypted: { type: Boolean, default: false },
+  recoveryState: { type: String, enum: ['none', 'pending', 'completed', 'cancelled'], default: 'none' },
+  recoveryToken: { type: String },
+  recoveryInitiatedAt: { type: Date },
+  recoveryMethod: { type: String, enum: ['user_executor', 'user_server'] },
+  recoveryExpiresAt: { type: Date },
 }, { timestamps: true })
 
 UserSchema.index({ status: 1 })

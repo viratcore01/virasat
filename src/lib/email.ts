@@ -260,3 +260,113 @@ export async function sendFinalMessageDeliveryEmail(beneficiary: {
     `
   })
 }
+
+// --- RECOVERY INITIATED ----------------------------------------------------
+
+export async function sendRecoveryInitiatedEmail(user: {
+  name: string
+  email: string
+  recoveryUrl: string
+  expiryDays: number
+}) {
+  return resend.emails.send({
+    from: FROM,
+    to: user.email,
+    subject: 'Virasat Password Recovery Initiated',
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <div style="background: #8B2635; padding: 16px; text-align: center; margin-bottom: 24px;">
+          <p style="color: white; margin: 0; font-size: 15px; font-weight: bold;">PASSWORD RECOVERY INITIATED</p>
+        </div>
+        <p style="color: #2C2C2C; font-size: 17px;">Hi ${user.name.split(' ')[0]},</p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          A password recovery was requested for your Virasat vault.
+        </p>
+        <div style="background: #FFF8EC; padding: 16px; border-left: 4px solid #C9A84C; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #8B6914;">
+            <strong>Waiting period:</strong> ${user.expiryDays} days. You can cancel anytime before the waiting period ends.
+          </p>
+        </div>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          If this wasn't you, click below to cancel immediately:
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${user.recoveryUrl}" style="background: #8B2635; color: white; padding: 14px 36px; text-decoration: none; font-size: 15px; font-weight: bold; display: inline-block; letter-spacing: 1px;">
+            Cancel Recovery
+          </a>
+        </div>
+        <p style="color: #6B7280; font-size: 12px; text-align: center;">
+          Recovery will be available after ${user.expiryDays} days. You will receive another email when ready.
+        </p>
+      </div>
+    `
+  })
+}
+
+// --- RECOVERY READY ----------------------------------------------------
+
+export async function sendRecoveryReadyEmail(user: {
+  name: string
+  email: string
+  recoveryUrl: string
+}) {
+  return resend.emails.send({
+    from: FROM,
+    to: user.email,
+    subject: 'Your Virasat Password Recovery is Ready',
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <div style="background: #2E7D32; padding: 16px; text-align: center; margin-bottom: 24px;">
+          <p style="color: white; margin: 0; font-size: 15px; font-weight: bold;">RECOVERY READY</p>
+        </div>
+        <p style="color: #2C2C2C; font-size: 17px;">Hi ${user.name.split(' ')[0]},</p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          Your password recovery waiting period has ended. You can now reset your password.
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${user.recoveryUrl}" style="background: #C9A84C; color: #0D1B2A; padding: 14px 36px; text-decoration: none; font-size: 15px; font-weight: bold; display: inline-block; letter-spacing: 1px;">
+            Reset Password
+          </a>
+        </div>
+        <p style="color: #6B7280; font-size: 12px; text-align: center;">
+          If you did not initiate this recovery, please contact support immediately.
+        </p>
+      </div>
+    `
+  })
+}
+
+// --- RECOVERY COMPLETED ----------------------------------------------------
+
+export async function sendRecoveryCompletedEmail(user: {
+  name: string
+  email: string
+}) {
+  return resend.emails.send({
+    from: FROM,
+    to: user.email,
+    subject: 'Your Virasat Password has Been Reset',
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <p style="color: #2C2C2C; font-size: 17px;">Hi ${user.name.split(' ')[0]},</p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          Your Virasat password has been successfully reset.
+        </p>
+        <div style="background: #FFF8EC; padding: 16px; border-left: 4px solid #C9A84C; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #8B6914;">
+            <strong>Important:</strong> Your old master password is no longer valid. You'll need your new password (combined with your shares) to access your vault.
+          </p>
+        </div>
+      </div>
+    `
+  })
+}
