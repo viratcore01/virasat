@@ -4,6 +4,12 @@ export type Religion = 'hindu' | 'muslim' | 'christian' | 'sikh' | 'jain' | 'oth
 export type CheckInFrequency = 'weekly' | 'fortnightly' | 'monthly'
 export type UserStatus = 'active' | 'pending_verification' | 'verified_deceased' | 'delivered'
 
+// ─── TRIGGER SYSTEM ─────────────────────────────────────────────────────────────
+
+export type VaultTriggerType = 'checkin_failure' | 'manual_trigger' | 'inactivity'
+export type VerificationStep = 'requested' | 'grace_period' | 'executor_verification' | 'document_upload' | 'final_approval' | 'completed'
+export type TriggerSource = 'system' | 'family' | 'executor' | 'emergency_contact'
+
 export interface IUser {
   _id: string
   email: string
@@ -16,7 +22,9 @@ export interface IUser {
   serverShare: string       // Shamir share 1 (encrypted with server key)
   checkInFrequency: CheckInFrequency
   lastCheckIn: string
+  lastLogin: string
   missedCount: number
+  inactivityDays: number
   snoozeUntil?: string
   status: UserStatus
   createdAt: string
@@ -187,15 +195,16 @@ export type VaultItemData =
 // ─── MESSAGE ─────────────────────────────────────────────────────────────────
 
 export type MessageType = 'video' | 'letter' | 'voice'
-export type TriggerType = 'on_death' | 'on_date'
+export type MessageTriggerType = 'on_death' | 'on_date'
+
+export type AccessTriggerType = 'checkin_failure' | 'manual_trigger' | 'inactivity'
 
 export interface IMessage {
   _id: string
-  userId: string
   type: MessageType
   title: string
   assignedTo: string          // beneficiary _id
-  triggerType: TriggerType
+  triggerType: MessageTriggerType
   triggerDate?: string        // if on_date
   encryptedContentUrl?: string // for video/voice
   encryptedText?: string      // for letter

@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose'
-import { VaultCategory, MessageType, TriggerType, ExecutorRequestStatus } from '@/types'
+import { VaultCategory, MessageType, MessageTriggerType, ExecutorRequestStatus, VerificationStep, TriggerSource, AccessTriggerType } from '@/types'
 
 // ─── BENEFICIARY ─────────────────────────────────────────────────────────────
 
@@ -69,7 +69,7 @@ export interface MessageDocument extends Document {
   type: MessageType
   title: string
   assignedTo: mongoose.Types.ObjectId
-  triggerType: TriggerType
+  triggerType: MessageTriggerType
   triggerDate?: Date
   encryptedContentUrl?: string
   encryptedText?: string
@@ -83,7 +83,6 @@ const MessageSchema = new Schema<MessageDocument>({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   type: { type: String, enum: ['video', 'letter', 'voice'], required: true },
   title: { type: String, required: true },
-  assignedTo: { type: Schema.Types.ObjectId, ref: 'Beneficiary', required: true },
   triggerType: { type: String, enum: ['on_death', 'on_date'], required: true },
   triggerDate: { type: Date },
   encryptedContentUrl: { type: String },
@@ -159,6 +158,66 @@ ExecutorRequestSchema.index({ status: 1, unlockDate: 1 })
 
 export const ExecutorRequest = mongoose.models.ExecutorRequest ||
   mongoose.model<ExecutorRequestDocument>('ExecutorRequest', ExecutorRequestSchema)
+
+// ─── TRIGGER EVENT ─────────────────────────────────────────────────────────
+
+export interface TriggerEventDocument extends Document {
+  userId: mongoose.Types.ObjectId
+  executorId?: mongoose.Types.ObjectId
+  triggerType: AccessTriggerType
+  source: TriggerSource
+  verificationStep: VerificationStep
+  stepActivatedAt: Date
+  gracePeriodEndsAt?: Date
+  executorVerifiedAt?: Date
+  deathCertificateUrl?: string
+  dateOfDeath?: string
+  finalApprovedAt?: Date
+  documentUploadedAt?: Date
+  completedAt?: Date
+  cancelledAt?: Date
+  cancellationReason?: string
+  notes: string[]
+  createdAt: Date
+}
+
+const TriggerEventSchema = new Schema<TriggerEventDocument>({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  executorId: { type: Schema.Types.ObjectId, ref: 'Executor' },
+  triggerType: {
+    type: String,
+    enum: ['checkin_failure', 'manual_trigger', 'inactivity'],
+    required: true
+  },
+  source: {
+    type: String,
+    enum: ['system', 'family', 'executor', 'emergency_contact'],
+    required: true
+  },
+  verificationStep: {
+    type: String,
+    enum: ['requested', 'grace_period', 'executor_verification', 'document_upload', 'final_approval', 'completed'],
+    default: 'requested'
+  },
+  stepActivatedAt: { type: Date, required: true },
+  gracePeriodEndsAt: { type: Date },
+  executorVerifiedAt: { type: Date },
+  deathCertificateUrl: { type: String },
+  dateOfDeath: { type: String },
+  finalApprovedAt: { type: Date },
+  documentUploadedAt: { type: Date },
+  completedAt: { type: Date },
+  cancelledAt: { type: Date },
+  cancellationReason: { type: String },
+  notes: { type: [String], default: [] },
+}, { timestamps: true })
+
+TriggerEventSchema.index({ userId: 1 })
+TriggerEventSchema.index({ verificationStep: 1 })
+TriggerEventSchema.index({ stepActivatedAt: 1 })
+
+export const TriggerEvent = mongoose.models.TriggerEvent ||
+  mongoose.model<TriggerEventDocument>('TriggerEvent', TriggerEventSchema)
 
 // Re-export User and Executor models
 export { User } from './User'

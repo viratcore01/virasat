@@ -3,15 +3,17 @@ import { NextRequest } from 'next/server'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/User'
 import { Executor } from '@/models/Executor'
-import { CheckIn } from '@/models/index'
+import { CheckIn, TriggerEvent } from '@/models/index'
 import { sendCheckinEmail, sendMissedCheckinEmail, sendEmergencyContactEmail, sendExecutorTriggerEmail } from '@/lib/email'
 import { generateSecureToken } from '@/lib/crypto'
 import { ok, serverError } from '@/lib/api'
 import { subDays, addDays } from 'date-fns'
 
+const GRACE_PERIOD_DAYS = 7
+const TRIGGER_THRESHOLD = 3
+
 export async function POST(req: NextRequest) {
   try {
-    // Verify cron secret
     const authHeader = req.headers.get('authorization')
     const isVercelCron = req.headers.get('x-vercel-cron') === '1'
     const hasSecret = authHeader === `Bearer ${process.env.CRON_SECRET}`
@@ -21,9 +23,8 @@ export async function POST(req: NextRequest) {
 
     await connectDB()
     const now = new Date()
-    const results = { processed: 0, pinged: 0, miss1: 0, miss2: 0, miss3: 0, errors: 0 }
+    const results = { processed: 0, pinged: 0, miss1: 0, miss2: 0, miss3: 0, triggered: 0, errors: 0 }
 
-    // Get all active users not in snooze
     const users = await User.find({
       status: 'active',
       $or: [
@@ -43,17 +44,14 @@ export async function POST(req: NextRequest) {
 
         const dueDays = freq === 'weekly' ? 7 : freq === 'fortnightly' ? 14 : 30
 
-        // Not due yet
         if (daysSinceLastCheckIn < dueDays) continue
 
-        // How many periods missed
         const periodsOverdue = Math.floor(daysSinceLastCheckIn / dueDays)
         const newMissedCount = Math.max(user.missedCount, periodsOverdue)
 
         await User.updateOne({ _id: user._id }, { $set: { missedCount: newMissedCount } })
 
         if (newMissedCount === 0) {
-          // Send regular check-in ping
           const token = generateSecureToken(32)
           await CheckIn.create({
             userId: user._id,
@@ -69,7 +67,6 @@ export async function POST(req: NextRequest) {
           results.pinged++
 
         } else if (newMissedCount === 1) {
-          // Send urgent reminder
           const token = generateSecureToken(32)
           await CheckIn.create({ userId: user._id, token, scheduledFor: now, missed: true })
 
@@ -79,8 +76,6 @@ export async function POST(req: NextRequest) {
           results.miss1++
 
         } else if (newMissedCount === 2) {
-          // Contact emergency person
-          // For MVP: use executor as emergency contact
           const executor = await Executor.findOne({ userId: user._id })
           if (executor) {
             await Promise.allSettled([
@@ -95,32 +90,52 @@ export async function POST(req: NextRequest) {
           }
           results.miss2++
 
-        } else if (newMissedCount >= 3) {
-          // Trigger executor — change status
-          if (user.status === 'active') {
-            await User.updateOne(
-              { _id: user._id },
-              { $set: { status: 'pending_verification' } }
+        } else if (newMissedCount >= TRIGGER_THRESHOLD) {
+          const existingTrigger = await TriggerEvent.findOne({
+            userId: user._id,
+            triggerType: 'checkin_failure',
+            verificationStep: { $nin: ['completed', 'cancelled'] }
+          })
+
+          if (existingTrigger) {
+            results.triggered++
+            continue
+          }
+
+          const gracePeriodEnds = addDays(now, GRACE_PERIOD_DAYS)
+
+          const triggerEvent = await TriggerEvent.create({
+            userId: user._id,
+            triggerType: 'checkin_failure',
+            source: 'system',
+            verificationStep: 'requested',
+            stepActivatedAt: now,
+            gracePeriodEndsAt: gracePeriodEnds,
+            notes: [`Check-in trigger: ${newMissedCount} missed check-ins`]
+          })
+
+          await User.updateOne(
+            { _id: user._id },
+            { $set: { status: 'pending_verification' } }
+          )
+
+          const executor = await Executor.findOne({ userId: user._id })
+          if (executor) {
+            await Executor.updateOne(
+              { _id: executor._id },
+              { $set: { status: 'notified', notifiedAt: now } }
             )
 
-            const executor = await Executor.findOne({ userId: user._id })
-            if (executor) {
-              await Executor.updateOne(
-                { _id: executor._id },
-                { $set: { status: 'notified', notifiedAt: now } }
-              )
-
-              await Promise.allSettled([
-                sendExecutorTriggerEmail({
-                  name: executor.name,
-                  email: executor.email,
-                  ownerName: user.name,
-                  token: executor.uniqueToken,
-                }),
-              ])
-            }
+            await Promise.allSettled([
+              sendExecutorTriggerEmail({
+                name: executor.name,
+                email: executor.email,
+                ownerName: user.name,
+                token: executor.uniqueToken,
+              }),
+            ])
           }
-          results.miss3++
+          results.triggered++
         }
       } catch (userErr) {
         console.error(`Error processing user ${user._id}:`, userErr)

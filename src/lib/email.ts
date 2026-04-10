@@ -306,6 +306,143 @@ export async function sendRecoveryInitiatedEmail(user: {
   })
 }
 
+// --- TRIGGER GRACE PERIOD NOTIFICATION ------------------------------------
+
+export async function sendTriggerGracePeriodEmail(user: {
+  name: string
+  email: string
+  triggerType: string
+  confirmUrl: string
+  graceDays: number
+}) {
+  return resend.emails.send({
+    from: FROM,
+    to: user.email,
+    subject: `Action Required: Verify your Virasat vault (${user.triggerType})`,
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <div style="background: #8B6914; padding: 16px; text-align: center; margin-bottom: 24px;">
+          <p style="color: white; margin: 0; font-size: 15px; font-weight: bold;">ACTION REQUIRED</p>
+        </div>
+        <p style="color: #2C2C2C; font-size: 17px;">Hi ${user.name.split(' ')[0]},</p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          A <strong>${user.triggerType}</strong> was triggered for your vault. This is a security check.
+        </p>
+        <div style="background: #FFF8EC; padding: 16px; border-left: 4px solid #C9A84C; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #8B6914;">
+            <strong>Grace period:</strong> ${user.graceDays} days. If you don't respond, your executor will be notified.
+          </p>
+        </div>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          If you're okay, click below to cancel this trigger:
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${user.confirmUrl}" style="background: #2E7D32; color: white; padding: 14px 36px; text-decoration: none; font-size: 15px; font-weight: bold; display: inline-block; letter-spacing: 1px;">
+            I'm Okay
+          </a>
+        </div>
+      </div>
+    `
+  })
+}
+
+// --- TRIGGER EXECUTOR VERIFICATION -------------------------------------------
+
+export async function sendExecutorVerificationEmail(executor: {
+  name: string
+  email: string
+  ownerName: string
+  triggerToken: string
+  verifyUrl: string
+}) {
+  return resend.emails.send({
+    from: FROM,
+    to: executor.email,
+    subject: `URGENT: Verify ${executor.ownerName}'s status - Virasat`,
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <div style="background: #8B2635; padding: 16px; text-align: center; margin-bottom: 24px;">
+          <p style="color: white; margin: 0; font-size: 15px; font-weight: bold;">VERIFICATION REQUIRED</p>
+        </div>
+        <p style="color: #2C2C2C; font-size: 17px;">Dear ${executor.name},</p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          The grace period has ended for <strong>${executor.ownerName}</strong>'s vault trigger. We need your help to verify their status.
+        </p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          Please verify if they are deceased or alive:
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${executor.verifyUrl}" style="background: #0D1B2A; color: #C9A84C; padding: 16px 48px; text-decoration: none; font-size: 16px; font-weight: bold; display: inline-block; border: 2px solid #C9A84C;">
+            Verify Status
+          </a>
+        </div>
+      </div>
+    `
+  })
+}
+
+// --- TRIGGER DOCUMENT UPLOAD ----------------------------------------------
+
+export async function sendDocumentUploadEmail(executor: {
+  name: string
+  email: string
+  uploadUrl: string
+}) {
+  return resend.emails.send({
+    from: FROM,
+    to: executor.email,
+    subject: 'Death Certificate Required - Virasat Vault',
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <p style="color: #2C2C2C; font-size: 17px;">Dear ${executor.name},</p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          You've verified that the account holder has passed away. Please upload the death certificate to proceed.
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${executor.uploadUrl}" style="background: #C9A84C; color: #0D1B2A; padding: 14px 36px; text-decoration: none; font-size: 15px; font-weight: bold; display: inline-block; letter-spacing: 1px;">
+            Upload Document
+          </a>
+        </div>
+      </div>
+    `
+  })
+}
+
+// --- TRIGGER COMPLETED -----------------------------------------------
+
+export async function sendTriggerCompletedEmail(beneficiaries: Array<{name: string, email: string}>, ownerName: string) {
+  return resend.emails.send({
+    from: FROM,
+    to: beneficiaries.map(b => b.email),
+    subject: `${ownerName}'s Virasat Vault Has Been Delivered`,
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <div style="background: #2E7D32; padding: 16px; text-align: center; margin-bottom: 24px;">
+          <p style="color: white; margin: 0; font-size: 15px; font-weight: bold;">VAULT DELIVERED</p>
+        </div>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          <strong>${ownerName}</strong>'s digital legacy vault has been delivered to their beneficiaries.
+        </p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          The Executor will be in touch with details on how to access the vault contents.
+        </p>
+      </div>
+    `
+  })
+}
+
 // --- RECOVERY READY ----------------------------------------------------
 
 export async function sendRecoveryReadyEmail(user: {

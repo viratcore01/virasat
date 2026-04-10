@@ -14,9 +14,11 @@ export interface UserDocument extends Document {
   serverShare: string
   checkInFrequency: CheckInFrequency
   lastCheckIn: Date
+  lastLogin: Date
   missedCount: number
   snoozeUntil?: Date
   status: UserStatus
+  inactivityDays: number
   subscriptionStatus: 'free' | 'pending' | 'active' | 'past_due' | 'cancelled'
   subscriptionId?: string
   subscriptionCurrentEnd?: Date
@@ -42,9 +44,11 @@ const UserSchema = new Schema<UserDocument>({
   serverShare: { type: String, default: '' },
   checkInFrequency: { type: String, enum: ['weekly', 'fortnightly', 'monthly'], default: 'weekly' },
   lastCheckIn: { type: Date, default: Date.now },
+  lastLogin: { type: Date, default: Date.now },
   missedCount: { type: Number, default: 0 },
   snoozeUntil: { type: Date },
   status: { type: String, enum: ['active', 'pending_verification', 'verified_deceased', 'delivered'], default: 'active' },
+  inactivityDays: { type: Number, default: 0 },
   subscriptionStatus: { type: String, enum: ['free', 'pending', 'active', 'past_due', 'cancelled'], default: 'free' },
   subscriptionId: { type: String },
   subscriptionCurrentEnd: { type: Date },
