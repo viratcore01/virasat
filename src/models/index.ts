@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose'
-import { VaultCategory, MessageType, MessageTriggerType, ExecutorRequestStatus, VerificationStep, TriggerSource, AccessTriggerType } from '@/types'
+import { VaultCategory, MessageType, MessageTriggerType, ExecutorRequestStatus, VerificationStep, TriggerSource, AccessTriggerType, AuditAction } from '@/types'
 
 // ─── BENEFICIARY ─────────────────────────────────────────────────────────────
 
@@ -222,6 +222,53 @@ TriggerEventSchema.index({ stepActivatedAt: 1 })
 
 export const TriggerEvent = mongoose.models.TriggerEvent ||
   mongoose.model<TriggerEventDocument>('TriggerEvent', TriggerEventSchema)
+
+// ─── AUDIT LOG ─────────────────────────────────────────────────────────
+
+export interface AuditLogDocument extends Document {
+  userId?: mongoose.Types.ObjectId
+  executorId?: mongoose.Types.ObjectId
+  action: AuditAction
+  ipAddress?: string
+  userAgent?: string
+  metadata?: Record<string, any>
+  success: boolean
+  errorMessage?: string
+  createdAt: Date
+}
+
+const AuditLogSchema = new Schema<AuditLogDocument>({
+  userId: { type: Schema.Types.ObjectId, ref: 'User' },
+  executorId: { type: Schema.Types.ObjectId, ref: 'Executor' },
+  action: {
+    type: String,
+    enum: [
+      'login_success', 'login_failed', 'logout',
+      'vault_access', 'vault_update', 'vault_item_create', 'vault_item_delete',
+      'beneficiary_add', 'beneficiary_remove',
+      'message_create',
+      'trigger_initiated', 'trigger_cancelled', 'trigger_completed',
+      'recovery_initiated', 'recovery_completed', 'recovery_cancelled',
+      'password_changed', 'settings_changed',
+      'executor_verified', 'executor_added',
+      'data_exported'
+    ],
+    required: true,
+    index: true
+  },
+  ipAddress: { type: String },
+  userAgent: { type: String },
+  metadata: { type: Schema.Types.Mixed },
+  success: { type: Boolean, default: true },
+  errorMessage: { type: String },
+}, { timestamps: { createdAt: 'timestamp', updatedAt: false } })
+
+AuditLogSchema.index({ userId: 1, timestamp: -1 })
+AuditLogSchema.index({ action: 1, timestamp: -1 })
+AuditLogSchema.index({ timestamp: -1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 }) // Auto-delete after 90 days
+
+export const AuditLog = mongoose.models.AuditLog ||
+  mongoose.model<AuditLogDocument>('AuditLog', AuditLogSchema)
 
 // Re-export User and Executor models
 export { User } from './User'

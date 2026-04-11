@@ -10,6 +10,31 @@ export type VaultTriggerType = 'checkin_failure' | 'manual_trigger' | 'inactivit
 export type VerificationStep = 'requested' | 'grace_period' | 'executor_verification' | 'document_upload' | 'final_approval' | 'completed'
 export type TriggerSource = 'system' | 'family' | 'executor' | 'emergency_contact'
 
+// ─── AUDIT LOG ─────────────────────────────────────────────────────────────
+
+export type AuditAction = 
+  | 'login_success' 
+  | 'login_failed' 
+  | 'logout'
+  | 'vault_access'
+  | 'vault_update'
+  | 'vault_item_create'
+  | 'vault_item_delete'
+  | 'beneficiary_add'
+  | 'beneficiary_remove'
+  | 'message_create'
+  | 'trigger_initiated'
+  | 'trigger_cancelled'
+  | 'trigger_completed'
+  | 'recovery_initiated'
+  | 'recovery_completed'
+  | 'recovery_cancelled'
+  | 'password_changed'
+  | 'settings_changed'
+  | 'executor_verified'
+  | 'executor_added'
+  | 'data_exported'
+
 export interface IUser {
   _id: string
   email: string

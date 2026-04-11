@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 import { connectDB } from '@/lib/db'
 import { User } from '@/models/User'
 import { verifyPassword, signToken, setAuthCookie, clearAuthCookie } from '@/lib/auth'
+import { logAuditEvent, getClientInfo, AUDIT_ACTIONS } from '@/lib/audit'
 import { ok, badRequest, unauthorized, serverError } from '@/lib/api'
 import { z } from 'zod'
 
@@ -23,11 +24,32 @@ export async function POST(req: NextRequest) {
 
     const { email, password } = parsed.data
     const user = await User.findOne({ email })
+    const clientInfo = getClientInfo(req)
 
-    if (!user) return unauthorized('Invalid email or password')
+    if (!user) {
+      await logAuditEvent({
+        action: AUDIT_ACTIONS.AUTH.LOGIN_FAILED,
+        ipAddress: clientInfo.ipAddress,
+        userAgent: clientInfo.userAgent,
+        metadata: { email },
+        success: false,
+        errorMessage: 'User not found'
+      })
+      return unauthorized('Invalid email or password')
+    }
 
     const valid = await verifyPassword(password, user.passwordHash)
-    if (!valid) return unauthorized('Invalid email or password')
+    if (!valid) {
+      await logAuditEvent({
+        userId: String(user._id),
+        action: AUDIT_ACTIONS.AUTH.LOGIN_FAILED,
+        ipAddress: clientInfo.ipAddress,
+        userAgent: clientInfo.userAgent,
+        success: false,
+        errorMessage: 'Invalid password'
+      })
+      return unauthorized('Invalid email or password')
+    }
 
     // Update last seen
     await User.updateOne({ _id: user._id }, { $set: { lastSeen: new Date() } })
@@ -41,6 +63,13 @@ export async function POST(req: NextRequest) {
     })
 
     setAuthCookie(token)
+
+    await logAuditEvent({
+      userId: String(user._id),
+      action: AUDIT_ACTIONS.AUTH.LOGIN_SUCCESS,
+      ipAddress: clientInfo.ipAddress,
+      userAgent: clientInfo.userAgent
+    })
 
     return ok({
       user: {
