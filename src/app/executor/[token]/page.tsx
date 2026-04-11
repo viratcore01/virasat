@@ -252,14 +252,14 @@ function StepWelcome({
     <div>
       <h1 className="text-2xl text-white font-bold mb-2">Welcome, {executorName}</h1>
       <p className="text-gray-400 mb-6">
-        You've been chosen as the Executor for <strong className="text-white">{ownerName}</strong>.
+        You&apos;ve been chosen as the Executor for <strong className="text-white">{ownerName}</strong>.
       </p>
       
       <div className="bg-[#0D1B2A] rounded-lg p-4 mb-6">
         <p className="text-sm text-gray-400 mb-2">What is this?</p>
         <p className="text-sm text-gray-500">
           {ownerName} has trusted you to help their family access important documents 
-          and messages if something happens to them. This is a zero-knowledge system — 
+          and messages if something happens to them. This is a zero-knowledge system 
           your data is encrypted and secure.
         </p>
       </div>
@@ -437,7 +437,7 @@ function VaultView({ owner, data }: { owner: any; data: any }) {
             <span className="text-green-500 text-3xl">✓</span>
           </div>
           <h1 className="text-2xl text-white font-bold">Vault Access Granted</h1>
-          <p className="text-gray-400">View {owner.name}'s legacy</p>
+          <p className="text-gray-400">View {owner.name}&apos;s legacy</p>
         </div>
 
         {data && (

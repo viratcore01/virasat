@@ -270,7 +270,7 @@ function RecoveryContent() {
             </div>
 
             <p className="text-gray-300 mb-6">
-              Enter your new master password. You'll need this + your shares to access your vault.
+              Enter your new master password. You&apos;ll need this + your shares to access your vault.
             </p>
 
             <div className="space-y-4">
