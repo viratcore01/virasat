@@ -16,6 +16,11 @@ export interface ExecutorDocument extends Document {
   dateOfDeath?: string
   unlockDate?: Date
   createdAt: Date
+  verifiedEmailAt?: Date
+  identityVerified: boolean
+  currentStep: number
+  flowCompleted: boolean
+  vaultAccessToken?: string
 }
 
 const ExecutorSchema = new Schema<ExecutorDocument>({
@@ -32,6 +37,11 @@ const ExecutorSchema = new Schema<ExecutorDocument>({
   deathCertificateUrl: { type: String },
   dateOfDeath: { type: String },
   unlockDate: { type: Date },
+  verifiedEmailAt: { type: Date },
+  identityVerified: { type: Boolean, default: false },
+  currentStep: { type: Number, default: 0 },
+  flowCompleted: { type: Boolean, default: false },
+  vaultAccessToken: { type: String },
 }, { timestamps: true })
 
 ExecutorSchema.index({ userId: 1 })
