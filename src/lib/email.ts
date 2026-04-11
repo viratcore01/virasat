@@ -443,6 +443,83 @@ export async function sendTriggerCompletedEmail(beneficiaries: Array<{name: stri
   })
 }
 
+// --- VAULT REVIEW REMINDER ----------------------------------------
+
+export async function sendVaultReviewReminderEmail(user: {
+  name: string
+  email: string
+  reviewUrl: string
+  vaultScore: number
+  staleItems: number
+  nextReviewDate: string
+}) {
+  return resend.emails.send({
+    from: FROM,
+    to: user.email,
+    subject: `${user.name.split(' ')[0]}, time to review your Virasat vault`,
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <p style="color: #2C2C2C; font-size: 17px;">Hi ${user.name.split(' ')[0]},</p>
+        <p style="color: #2C2C2C; font-size: 16px; line-height: 1.8;">
+          It's time for a quarterly review of your digital legacy vault. Keeping your information up-to-date ensures your family can access everything when they need it.
+        </p>
+        <div style="background: #1B2F45; padding: 24px; margin: 24px 0; border-radius: 8px; text-align: center;">
+          <p style="color: #C9A84C; margin: 0; font-size: 48px; font-weight: bold;">${user.vaultScore}%</p>
+          <p style="color: #8BA5BC; margin: 8px 0 0; font-size: 14px;">Vault Completeness</p>
+          ${user.staleItems > 0 ? `
+          <p style="color: #EF4444; margin: 16px 0 0; font-size: 14px;">${user.staleItems} item${user.staleItems > 1 ? 's' : ''} need attention</p>
+          ` : ''}
+        </div>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${user.reviewUrl}" style="background: #C9A84C; color: #0D1B2A; padding: 14px 36px; text-decoration: none; font-size: 15px; font-weight: bold; display: inline-block; letter-spacing: 1px;">
+            Review My Vault
+          </a>
+        </div>
+        <p style="color: #6B7280; font-size: 12px; text-align: center;">
+          Next review recommended: ${user.nextReviewDate}
+        </p>
+      </div>
+    `
+  })
+}
+
+// --- VAULT UPDATED CONFIRMATION ------------------------------------
+
+export async function sendVaultUpdatedConfirmationEmail(user: {
+  name: string
+  email: string
+  vaultScore: number
+  itemsUpdated: number
+}) {
+  return resend.emails.send({
+    from: FROM,
+    to: user.email,
+    subject: `Your Virasat vault is ${user.vaultScore}% complete`,
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; background: #F5F0E8; padding: 40px;">
+        <div style="background: #0D1B2A; padding: 30px; text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #C9A84C; font-size: 32px; margin: 0; letter-spacing: 4px;">VIRASAT</h1>
+        </div>
+        <div style="text-align: center;">
+          <p style="color: #C9A84C; font-size: 48px; font-weight: bold; margin: 0;">${user.vaultScore}%</p>
+          <p style="color: #2C2C2C; margin: 8px 0 24px;">Vault Completeness</p>
+        </div>
+        <p style="color: #2C2C2C; font-size: 16px;">
+          Thanks for updating your vault, ${user.name.split(' ')[0]}! Your digital legacy is more complete now.
+        </p>
+        ${user.itemsUpdated > 0 ? `
+        <p style="color: #2C2C2C; font-size: 14px;">
+          ${user.itemsUpdated} item${user.itemsUpdated > 1 ? 's' : ''} updated this session.
+        </p>
+        ` : ''}
+      </div>
+    `
+  })
+}
+
 // --- RECOVERY READY ----------------------------------------------------
 
 export async function sendRecoveryReadyEmail(user: {

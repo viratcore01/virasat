@@ -38,6 +38,8 @@ export interface VaultItemDocument extends Document {
   assignedTo: mongoose.Types.ObjectId
   hasAttachment: boolean
   attachmentUrl?: string
+  lastReviewedAt: Date
+  isStale: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -54,6 +56,8 @@ const VaultItemSchema = new Schema<VaultItemDocument>({
   assignedTo: { type: Schema.Types.ObjectId, ref: 'Beneficiary', required: true },
   hasAttachment: { type: Boolean, default: false },
   attachmentUrl: { type: String },
+  lastReviewedAt: { type: Date, default: Date.now },
+  isStale: { type: Boolean, default: false },
 }, { timestamps: true })
 
 VaultItemSchema.index({ userId: 1 })

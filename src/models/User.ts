@@ -28,6 +28,11 @@ export interface UserDocument extends Document {
   recoveryInitiatedAt?: Date
   recoveryMethod?: 'user_executor' | 'user_server'
   recoveryExpiresAt?: Date
+  lastVaultReview?: Date
+  reminderFrequency: 'monthly' | 'quarterly' | 'biannually' | 'never'
+  lastReminderSent?: Date
+  nextReviewDate?: Date
+  vaultScore?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -58,6 +63,11 @@ const UserSchema = new Schema<UserDocument>({
   recoveryInitiatedAt: { type: Date },
   recoveryMethod: { type: String, enum: ['user_executor', 'user_server'] },
   recoveryExpiresAt: { type: Date },
+  lastVaultReview: { type: Date },
+  reminderFrequency: { type: String, enum: ['monthly', 'quarterly', 'biannually', 'never'], default: 'quarterly' },
+  lastReminderSent: { type: Date },
+  nextReviewDate: { type: Date },
+  vaultScore: { type: Number },
 }, { timestamps: true })
 
 UserSchema.index({ status: 1 })
