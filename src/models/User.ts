@@ -17,6 +17,8 @@ export interface UserDocument extends Document {
   lastLogin: Date
   missedCount: number
   snoozeUntil?: Date
+  consentGiven: boolean
+  consentAt?: Date
   status: UserStatus
   inactivityDays: number
   subscriptionStatus: 'free' | 'pending' | 'active' | 'past_due' | 'cancelled'
@@ -52,6 +54,8 @@ const UserSchema = new Schema<UserDocument>({
   lastLogin: { type: Date, default: Date.now },
   missedCount: { type: Number, default: 0 },
   snoozeUntil: { type: Date },
+  consentGiven: { type: Boolean, default: false },
+  consentAt: { type: Date },
   status: { type: String, enum: ['active', 'pending_verification', 'verified_deceased', 'delivered'], default: 'active' },
   inactivityDays: { type: Number, default: 0 },
   subscriptionStatus: { type: String, enum: ['free', 'pending', 'active', 'past_due', 'cancelled'], default: 'free' },

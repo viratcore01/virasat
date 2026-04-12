@@ -17,6 +17,8 @@ const SignupSchema = z.object({
   checkInFrequency: z.enum(['weekly', 'fortnightly', 'monthly']).default('weekly'),
   encryptionSalt: z.string().optional(),
   keyCheck: z.string().optional(),
+  consentGiven: z.boolean().default(false),
+  consentAt: z.string().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -29,10 +31,12 @@ export async function POST(req: NextRequest) {
       return badRequest(parsed.error.errors[0].message)
     }
 
-    const { email, name, phone, password, religion, dob, checkInFrequency, encryptionSalt, keyCheck } = parsed.data
+    const { email, name, phone, password, religion, dob, checkInFrequency, encryptionSalt, keyCheck, consentGiven, consentAt } = parsed.data
 
     const existing = await User.findOne({ email })
     if (existing) return badRequest('Email already registered')
+
+    if (!consentGiven) return badRequest('Consent is required to create an account')
 
     const passwordHash = await hashPassword(password)
     const saltToStore = encryptionSalt || generateSalt()
@@ -51,6 +55,8 @@ export async function POST(req: NextRequest) {
       lastCheckIn: new Date(),
       missedCount: 0,
       status: 'active',
+      consentGiven: true,
+      consentAt: consentAt ? new Date(consentAt) : new Date(),
     })
 
     const token = signToken({

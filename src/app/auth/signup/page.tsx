@@ -26,13 +26,14 @@ const SignupSchema = z.object({
 
 type SignupForm = z.infer<typeof SignupSchema>
 
-const STEPS = ['Personal', 'Security', 'Preferences']
+const STEPS = ['Consent', 'Personal', 'Preferences']
 const KEYCHECK_VALUE_V2 = 'virasat-key-check:v2'
 
 export default function SignupPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [consentChecked, setConsentChecked] = useState(false)
 
   const { register, handleSubmit, formState: { errors }, watch, trigger } = useForm<SignupForm>({
     resolver: zodResolver(SignupSchema),
@@ -40,9 +41,15 @@ export default function SignupPage() {
   })
 
   const nextStep = async () => {
+    // Consent step requires checkbox to be checked
+    if (step === 0 && !consentChecked) {
+      toast.error('Please accept the consent to continue')
+      return
+    }
     const fields: Record<number, (keyof SignupForm)[]> = {
-      0: ['name', 'email', 'phone', 'dob', 'religion'],
-      1: ['password', 'masterPassword', 'confirmMaster'],
+      0: [],
+      1: ['name', 'email', 'phone', 'dob', 'religion'],
+      2: ['password', 'masterPassword', 'confirmMaster'],
     }
     const valid = await trigger(fields[step])
     if (valid) setStep(s => s + 1)
@@ -68,6 +75,8 @@ export default function SignupPage() {
           checkInFrequency: data.checkInFrequency,
           encryptionSalt,
           keyCheck,
+          consentGiven: consentChecked,
+          consentAt: new Date().toISOString(),
         })
       })
 
@@ -142,56 +151,84 @@ export default function SignupPage() {
             transition={{ duration: 0.3 }}
           >
             <form onSubmit={handleSubmit(onSubmit)}>
-              {/* Step 0 — Personal */}
+              {/* Step 0 — Consent */}
               {step === 0 && (
                 <div className="space-y-8">
                   <div>
-                    <h1 className="font-display text-4xl mb-2">Tell us about you</h1>
-                    <p className="text-ash text-sm">This helps us set up your vault correctly.</p>
+                    <h1 className="font-display text-4xl mb-2">Your Data, Your Control</h1>
+                    <p className="text-ash text-sm">Before we create your vault, please read and accept our terms.</p>
                   </div>
-                  <div className="space-y-6">
+                  
+                  <div className="bg-vault/50 border border-gold/20 p-6 space-y-4 max-h-80 overflow-y-auto">
                     <div>
-                      <input {...register('name')} placeholder="Full name" className="virasat-input" />
-                      {errors.name && <p className="text-ember text-xs mt-1 font-mono">{errors.name.message}</p>}
+                      <h3 className="font-display text-gold text-lg mb-2">1. Data Collection & Purpose</h3>
+                      <p className="text-ash/70 text-sm leading-relaxed">
+                        We collect your name, email, phone, date of birth, and religion solely to create your digital legacy vault. 
+                        Your messages and vault contents are encrypted with your master password — we never see or store them.
+                      </p>
                     </div>
                     <div>
-                      <input {...register('email')} type="email" placeholder="Email address" className="virasat-input" />
-                      {errors.email && <p className="text-ember text-xs mt-1 font-mono">{errors.email.message}</p>}
+                      <h3 className="font-display text-gold text-lg mb-2">2. Data Storage & Retention</h3>
+                      <p className="text-ash/70 text-sm leading-relaxed">
+                        Your data is stored securely as long as your account is active. You can delete your account and all data at any time 
+                        from Settings. Upon deletion, all personal data and vault contents are permanently removed.
+                      </p>
                     </div>
                     <div>
-                      <input {...register('phone')} placeholder="Phone number (optional)" className="virasat-input" />
-                      {errors.phone && <p className="text-ember text-xs mt-1 font-mono">{errors.phone.message}</p>}
+                      <h3 className="font-display text-gold text-lg mb-2">3. Encryption & Security</h3>
+                      <p className="text-ash/70 text-sm leading-relaxed">
+                        Your vault uses zero-knowledge encryption. Your master password never leaves your device. 
+                        We cannot access your messages or recover your data if you forget your master password.
+                      </p>
                     </div>
                     <div>
-                      <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Date of Birth</label>
-                      <input {...register('dob')} type="date" className="virasat-input" />
+                      <h3 className="font-display text-gold text-lg mb-2">4. Not a Legal Will</h3>
+                      <p className="text-ash/70 text-sm leading-relaxed">
+                        <strong className="text-ember">Important:</strong> Virasat is NOT a legal will, legal document, or substitute for legal advice. 
+                        It is a digital legacy tool for organizing and delivering messages to your loved ones. 
+                        For legal inheritance matters, please consult a qualified legal professional.
+                      </p>
                     </div>
                     <div>
-                      <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-3">Religion</label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {['hindu', 'muslim', 'christian', 'sikh', 'jain', 'other'].map(r => (
-                          <label key={r} className="cursor-pointer">
-                            <input {...register('religion')} type="radio" value={r} className="peer sr-only" />
-                            <div className="border border-ash/20 px-3 py-2 text-xs font-mono text-center capitalize tracking-wide peer-checked:border-gold peer-checked:text-gold peer-checked:bg-gold/5 hover:border-gold/40 transition-all cursor-pointer">
-                              {r}
-                            </div>
-                          </label>
-                        ))}
-                      </div>
+                      <h3 className="font-display text-gold text-lg mb-2">5. Consent</h3>
+                      <p className="text-ash/70 text-sm leading-relaxed">
+                        By checking below, you consent to our collection and processing of your data as described above. 
+                        You can withdraw consent and delete your data at any time.
+                      </p>
                     </div>
                   </div>
-                  <button type="button" onClick={nextStep} className="btn-gold w-full">
-                    Continue →
+
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={consentChecked}
+                      onChange={(e) => setConsentChecked(e.target.checked)}
+                      className="mt-1 w-5 h-5 accent-gold"
+                    />
+                    <span className="text-ash text-sm">
+                      I have read and agree to the <Link href="/privacy" target="_blank" className="text-gold underline">Privacy Policy</Link> and 
+                      understand that Virasat is NOT a legal will or legal service. I consent to the collection and processing of my data.
+                    </span>
+                  </label>
+
+                  <div className="bg-ember/10 border border-ember/30 p-4">
+                    <p className="font-mono text-ember/80 text-xs">
+                      ⚠️ This is a digital legacy tool, not a legal will. For legal matters, consult a lawyer.
+                    </p>
+                  </div>
+
+                  <button type="button" onClick={nextStep} className="btn-gold w-full" disabled={!consentChecked}>
+                    Accept & Continue →
                   </button>
                 </div>
               )}
 
-              {/* Step 1 — Security */}
+              {/* Step 1 — Personal */}
               {step === 1 && (
                 <div className="space-y-8">
                   <div>
-                    <h1 className="font-display text-4xl mb-2">Set your passwords</h1>
-                    <p className="text-ash text-sm">Two passwords: one for login, one for encryption.</p>
+                    <h1 className="font-display text-4xl mb-2">Tell us about you</h1>
+                    <p className="text-ash text-sm">This helps us set up your vault correctly.</p>
                   </div>
                   <div className="bg-gold/5 border border-gold/20 p-4">
                     <p className="font-mono text-xs text-gold/80 leading-relaxed">

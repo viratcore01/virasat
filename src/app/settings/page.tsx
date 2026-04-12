@@ -284,7 +284,7 @@ export default function SettingsPage() {
             {user && (
               <div className="vault-card p-6 mb-6">
                 <div className="space-y-3">
-                  {[{ l: 'Name', v: user.name }, { l: 'Email', v: user.email }, { l: 'Phone', v: user.phone }, { l: 'Religion', v: user.religion }, { l: 'Date of Birth', v: user.dob }, { l: 'Status', v: user.status }, { l: 'Member since', v: new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) }].map(f => (
+                  {[{ l: 'Name', v: user.name }, { l: 'Email', v: user.email }, { l: 'Phone', v: user.phone }, { l: 'Religion', v: user.religion }, { l: 'Date of Birth', v: user.dob }, { l: 'Status', v: user.status }, { l: 'Member since', v: new Date(user.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) }, { l: 'Consent', v: user.consentGiven ? 'Yes' : 'No' }].map(f => (
                     <div key={f.l} className="flex justify-between border-b border-gold/10 pb-2">
                       <span className="font-mono text-gold/35 text-xs tracking-wider uppercase">{f.l}</span>
                       <span className="text-gold/70 text-sm capitalize">{f.v}</span>
@@ -293,12 +293,51 @@ export default function SettingsPage() {
                 </div>
               </div>
             )}
+
+            {/* Data Export */}
+            <div className="border border-gold/20 p-5 mb-6">
+              <p className="font-mono text-gold/60 text-xs tracking-wider uppercase mb-3">Your Data</p>
+              <p className="text-ash text-sm mb-4">Download a copy of your data at any time.</p>
+              <button onClick={async () => {
+                try {
+                  const res = await fetch('/api/auth/export')
+                  const json = await res.json()
+                  if (!json.success) throw new Error(json.error)
+                  const blob = new Blob([JSON.stringify(json.data, null, 2)], { type: 'application/json' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `virasat-data-${new Date().toISOString().split('T')[0]}.json`
+                  a.click()
+                  URL.revokeObjectURL(url)
+                  toast.success('Data exported')
+                } catch (err) { toast.error('Failed to export') }
+              }} className="text-gold/70 hover:text-gold font-mono text-xs tracking-wider transition-colors border border-gold/20 px-4 py-2">
+                EXPORT MY DATA
+              </button>
+            </div>
+
             <div className="border border-ember/20 p-5">
               <p className="font-mono text-ember/60 text-xs tracking-wider uppercase mb-3">Danger Zone</p>
               <p className="text-ash text-sm mb-4">Remember: your master password is never stored. If you forget it, your encrypted data cannot be recovered.</p>
-              <button onClick={handleLogout} className="text-ember/60 hover:text-ember font-mono text-xs tracking-wider transition-colors border border-ember/20 px-4 py-2">
-                SIGN OUT
-              </button>
+              <div className="flex gap-3">
+                <button onClick={handleLogout} className="text-ember/60 hover:text-ember font-mono text-xs tracking-wider transition-colors border border-ember/20 px-4 py-2">
+                  SIGN OUT
+                </button>
+                <button onClick={async () => {
+                  if (!confirm('Are you sure you want to DELETE your account and all data? This cannot be undone.')) return
+                  if (!confirm('This will permanently delete your vault, messages, and all data. Continue?')) return
+                  try {
+                    const res = await fetch('/api/auth/account', { method: 'DELETE' })
+                    const json = await res.json()
+                    if (!json.success) throw new Error(json.error)
+                    toast.success('Account deleted')
+                    router.push('/')
+                  } catch (err) { toast.error('Failed to delete account') }
+                }} className="text-ember font-mono text-xs tracking-wider transition-colors border border-ember/40 px-4 py-2 hover:bg-ember/10">
+                  DELETE ACCOUNT
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
