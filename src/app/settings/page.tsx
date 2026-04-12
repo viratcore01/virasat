@@ -226,15 +226,54 @@ export default function SettingsPage() {
               ))}
             </div>
 
-            {user?.snoozeUntil && new Date(user.snoozeUntil) > new Date() && (
-              <div className="border border-gold/30 bg-gold/5 p-4 mb-6">
-                <p className="font-mono text-gold text-xs tracking-wider">CHECK-INS SNOOZED UNTIL {new Date(user.snoozeUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-              </div>
-            )}
-
             <button onClick={saveFrequency} disabled={savingFreq} className="btn-gold w-full">
               {savingFreq ? 'Saving...' : 'Save Frequency'}
             </button>
+
+            {/* Snooze Section */}
+            <div className="mt-10 pt-8 border-t border-gold/15">
+              <h2 className="font-display text-2xl mb-3">Temporarily Snooze Check-ins</h2>
+              <p className="text-ash text-sm leading-relaxed mb-6">Going on vacation, hospitalized, or unavailable? Pause check-ins for a set period. You&apos;ll still receive reminders but won&apos;t trigger your executor.</p>
+              
+              {user?.snoozeUntil && new Date(user.snoozeUntil) > new Date() ? (
+                <div className="border border-gold/30 bg-gold/5 p-5 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="font-mono text-gold text-xs tracking-wider uppercase mb-1">Currently Snoozed</p>
+                      <p className="text-gold/70 text-sm">Until {new Date(user.snoozeUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                    <span className="text-2xl">⏸️</span>
+                  </div>
+                  <button onClick={async () => {
+                    try {
+                      const res = await fetch('/api/checkin/snooze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days: 0 }) })
+                      const json = await res.json()
+                      if (!json.success) throw new Error(json.error)
+                      toast.success('Snooze cancelled - check-ins resumed')
+                      void fetchAll()
+                    } catch (err) { toast.error('Failed to cancel snooze') }
+                  }} className="w-full py-2 border border-gold/30 text-gold/70 hover:text-gold hover:border-gold font-mono text-xs tracking-wider transition-all">
+                    RESUME CHECK-INS NOW
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-3">
+                  {[{ d: 7, l: '1 Week' }, { d: 14, l: '2 Weeks' }, { d: 30, l: '1 Month' }, { d: 60, l: '2 Months' }, { d: 90, l: '3 Months' }].map(opt => (
+                    <button key={opt.d} onClick={async () => {
+                      try {
+                        const res = await fetch('/api/checkin/snooze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ days: opt.d }) })
+                        const json = await res.json()
+                        if (!json.success) throw new Error(json.error)
+                        toast.success(`Check-ins snoozed for ${opt.d} days`)
+                        void fetchAll()
+                      } catch (err) { toast.error('Failed to snooze') }
+                    }} className="py-3 border border-gold/20 text-gold/70 hover:text-gold hover:border-gold font-mono text-xs tracking-wider transition-all">
+                      {opt.l}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
 

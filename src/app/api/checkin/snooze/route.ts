@@ -14,7 +14,15 @@ export async function POST(req: NextRequest) {
     await connectDB()
     const { days } = await req.json()
 
-    if (!days || days < 1 || days > 90) return badRequest('Snooze days must be 1-90')
+    if (days === 0) {
+      await User.updateOne(
+        { _id: user.id },
+        { $unset: { snoozeUntil: 1 }, $set: { missedCount: 0 } }
+      )
+      return ok(null, 'Snooze cancelled - check-ins resumed')
+    }
+
+    if (!days || days < 1 || days > 90) return badRequest('Snooze days must be 1-90 or 0 to cancel')
 
     const snoozeUntil = addDays(new Date(), days)
     await User.updateOne(

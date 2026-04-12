@@ -5,6 +5,7 @@ import { User } from '@/models/User'
 import { Executor } from '@/models/Executor'
 import { CheckIn, TriggerEvent } from '@/models/index'
 import { sendCheckinEmail, sendMissedCheckinEmail, sendEmergencyContactEmail, sendExecutorTriggerEmail } from '@/lib/email'
+import { sendCheckInWhatsApp, sendMissedCheckInWhatsApp, sendEmergencyContactWhatsApp, sendExecutorTriggerWhatsApp } from '@/lib/whatsapp'
 import { generateSecureToken } from '@/lib/crypto'
 import { ok, serverError } from '@/lib/api'
 import { subDays, addDays } from 'date-fns'
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
           const userData = { name: user.name, phone: user.phone, email: user.email, token }
           await Promise.allSettled([
             sendCheckinEmail(userData),
+            sendCheckInWhatsApp(userData),
           ])
           results.pinged++
 
@@ -70,8 +72,10 @@ export async function POST(req: NextRequest) {
           const token = generateSecureToken(32)
           await CheckIn.create({ userId: user._id, token, scheduledFor: now, missed: true })
 
+          const missData = { name: user.name, phone: user.phone, email: user.email, token, missCount: 1 }
           await Promise.allSettled([
             sendMissedCheckinEmail({ name: user.name, email: user.email, token, missCount: 1 }),
+            sendMissedCheckInWhatsApp(missData),
           ])
           results.miss1++
 
@@ -85,6 +89,12 @@ export async function POST(req: NextRequest) {
                 ownerName: user.name,
                 ownerPhone: user.phone,
                 appUrl: process.env.NEXT_PUBLIC_APP_URL!,
+              }),
+              sendEmergencyContactWhatsApp({
+                name: executor.name,
+                phone: executor.phone,
+                ownerName: user.name,
+                ownerPhone: user.phone,
               }),
             ])
           }
@@ -130,6 +140,12 @@ export async function POST(req: NextRequest) {
               sendExecutorTriggerEmail({
                 name: executor.name,
                 email: executor.email,
+                ownerName: user.name,
+                token: executor.uniqueToken,
+              }),
+              sendExecutorTriggerWhatsApp({
+                name: executor.name,
+                phone: executor.phone,
                 ownerName: user.name,
                 token: executor.uniqueToken,
               }),

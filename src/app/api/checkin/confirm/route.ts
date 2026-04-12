@@ -20,10 +20,10 @@ export async function GET(req: NextRequest) {
       { $set: { respondedAt: new Date(), missed: false } }
     )
 
-    // Reset missed count on user
+    // Reset missed count and clear snooze on user
     await User.updateOne(
       { _id: checkIn.userId },
-      { $set: { lastCheckIn: new Date(), missedCount: 0 } }
+      { $set: { lastCheckIn: new Date(), missedCount: 0 }, $unset: { snoozeUntil: 1 } }
     )
 
     return ok({ confirmed: true }, 'Check-in confirmed. Your family is safe.')
