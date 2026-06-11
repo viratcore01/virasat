@@ -98,6 +98,31 @@ curl -X POST http://localhost:3000/api/demo/populate
 npm run dev
 ```
 
+## 🔐 **Security & Legal (Phase 1)**
+- **Legal Pages**: `/terms`, `/privacy`, `/legal` with mandatory radiobox consent on signup
+- **DPDP Basics**: consentVersion stored, user data export/delete endpoints (`/api/user/data-export`, `/api/user/delete-account`)
+- **Golden Rule**: `/legal` is the single source of truth for trust boundaries and legal disclaimer
+- **Zero-Knowledge**: server never decrypts vault data; `passwordHash` checked but never stored by friendly path
+- **Audit Logging**: action log in `src/lib/crypto.ts`
+- **COMPLIANCE.md**: legal status documented
+- **Environment safety**: sensitive webhook paths removed from default impact flow
+
+## 🤖 **Automation & Reliability (Phase 2)**
+- Multi-executor support (primary + backup, max 3)
+- 30-day waiting period cron (`/api/cron/waiting-period`)
+- Death certificate handling with status workflow
+- Notification preferences in settings
+- Activity log for transparency
+- Vercel Cron schedules configured
+
+## 💎 **Monetization & Premium Features (Phase 3)**
+- **Pricing**: `/pricing` page with Free vs Premium
+- **Razorpay**: subscription creation + webhook lifecycle
+- **Subscription Model**: plan, status, expiry, `razorpaySubscriptionId`
+- **Feature Gating**: asset/executor/video/notifications limits enforced
+- **AI Will Generator**: `/ai/will-generator` (gated to Premium)
+- **Dashboard**: plan usage bar + upgrade prompts
+
 ## 📈 **Impact Metrics**
 
 | Metric | Value | Description |

@@ -21,9 +21,11 @@ export interface UserDocument extends Document {
   consentAt?: Date
   status: UserStatus
   inactivityDays: number
-  subscriptionStatus: 'free' | 'pending' | 'active' | 'past_due' | 'cancelled'
+  subscriptionStatus: 'free' | 'pending' | 'active' | 'past_due' | 'cancelled' | 'expired'
   subscriptionId?: string
   subscriptionCurrentEnd?: Date
+  plan: 'free' | 'premium'
+  razorpayCustomerId?: string
   isDataEncrypted: boolean
   recoveryState: 'none' | 'pending' | 'completed' | 'cancelled'
   recoveryToken?: string
@@ -35,6 +37,15 @@ export interface UserDocument extends Document {
   lastReminderSent?: Date
   nextReviewDate?: Date
   vaultScore?: number
+  notificationPreferences: {
+    email: boolean
+    whatsapp: boolean
+    sms: boolean
+    checkinReminders: boolean
+    executorAlerts: boolean
+    beneficiaryNotifications: boolean
+  }
+  maxExecutors: number
   createdAt: Date
   updatedAt: Date
 }
@@ -70,8 +81,17 @@ const UserSchema = new Schema<UserDocument>({
   lastVaultReview: { type: Date },
   reminderFrequency: { type: String, enum: ['monthly', 'quarterly', 'biannually', 'never'], default: 'quarterly' },
   lastReminderSent: { type: Date },
-  nextReviewDate: { type: Date },
+   nextReviewDate: { type: Date },
   vaultScore: { type: Number },
+  notificationPreferences: {
+    email: { type: Boolean, default: true },
+    whatsapp: { type: Boolean, default: false },
+    sms: { type: Boolean, default: false },
+    checkinReminders: { type: Boolean, default: true },
+    executorAlerts: { type: Boolean, default: true },
+    beneficiaryNotifications: { type: Boolean, default: true },
+  },
+  maxExecutors: { type: Number, default: 3 },
 }, { timestamps: true })
 
 UserSchema.index({ status: 1 })

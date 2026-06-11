@@ -9,22 +9,19 @@ import { clearSessionKey } from '@/lib/crypto'
 export default function SettingsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'executor' | 'beneficiaries' | 'checkin' | 'account'>('executor')
-
-  // Executor
-  const [executor, setExecutor] = useState<any>(null)
-  const [execForm, setExecForm] = useState({ name: '', email: '', phone: '', relationship: '' })
-  const [savingExec, setSavingExec] = useState(false)
-
-  // Beneficiaries
-  const [beneficiaries, setBeneficiaries] = useState<any[]>([])
-  const [benForm, setBenForm] = useState({ name: '', email: '', phone: '', relationship: '' })
-  const [savingBen, setSavingBen] = useState(false)
-
-  // Check-in
-  const [user, setUser] = useState<any>(null)
-  const [frequency, setFrequency] = useState('weekly')
-  const [savingFreq, setSavingFreq] = useState(false)
+  const [tab, setTab] = useState<'executor' | 'beneficiaries' | 'checkin' | 'notifications' | 'activity' | 'account'>('executor')
+  const [executors, setExecutors] = useState<any[]>([])
+  const [primaryExecutor, setPrimaryExecutor] = useState<any>(null)
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    email: true,
+    whatsapp: false,
+    sms: false,
+    checkinReminders: true,
+    executorAlerts: true,
+    beneficiaryNotifications: true,
+  })
+  const [activities, setActivities] = useState<any[]>([])
+  const [loadingActivities, setLoadingActivities] = useState(false)
 
   const fetchAll = useCallback(async () => {
     try {
@@ -33,11 +30,22 @@ export default function SettingsPage() {
       if (!userData.success) { router.push('/auth/login'); return }
       setUser(userData.data)
       setFrequency(userData.data.checkInFrequency || 'weekly')
+      
       if (execData.data) {
-        setExecutor(execData.data)
-        setExecForm({ name: execData.data.name, email: execData.data.email, phone: execData.data.phone, relationship: execData.data.relationship })
+        if (Array.isArray(execData.data)) {
+          setExecutors(execData.data)
+          const primary = execData.data.find((e: any) => e.role === 'primary' || e.order === 0)
+          setPrimaryExecutor(primary || execData.data[0])
+        } else {
+          setExecutors([execData.data])
+          setPrimaryExecutor(execData.data)
+        }
       }
       setBeneficiaries(benData.data || [])
+      
+      if (userData.data.notificationPreferences) {
+        setNotificationPrefs(userData.data.notificationPreferences)
+      }
     } catch { toast.error('Failed to load') }
     finally { setLoading(false) }
   }, [router])
@@ -46,18 +54,36 @@ export default function SettingsPage() {
     void fetchAll()
   }, [fetchAll])
 
-  const saveExecutor = async () => {
-    if (!execForm.name || !execForm.email || !execForm.phone || !execForm.relationship) { toast.error('All fields required'); return }
-    setSavingExec(true)
+  const saveNotificationPrefs = async () => {
+    setSavingFreq(true)
     try {
-      const res = await fetch('/api/executor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(execForm) })
+      const res = await fetch('/api/auth/settings', { 
+        method: 'PUT', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ notificationPreferences: notificationPrefs }) 
+      })
       const json = await res.json()
       if (!json.success) throw new Error(json.error)
-      toast.success(json.message)
-      void fetchAll()
+      toast.success('Notification preferences updated')
     } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed') }
-    finally { setSavingExec(false) }
+    finally { setSavingFreq(false) }
   }
+
+  const loadActivities = async () => {
+    setLoadingActivities(true)
+    try {
+      const res = await fetch('/api/user/activity?limit=50')
+      const json = await res.json()
+      if (json.success) setActivities(json.data || [])
+    } catch { toast.error('Failed to load activity') }
+    finally { setLoadingActivities(false) }
+  }
+
+  useEffect(() => {
+    if (tab === 'activity') {
+      loadActivities()
+    }
+  }, [tab])
 
   const addBeneficiary = async () => {
     if (!benForm.name || !benForm.email || !benForm.phone || !benForm.relationship) { toast.error('All fields required'); return }
@@ -127,10 +153,10 @@ export default function SettingsPage() {
         <h1 className="font-display text-4xl mb-8">Configure Your Vault</h1>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-10 border-b border-gold/15">
-          {[{ id: 'executor', label: 'Executor' }, { id: 'beneficiaries', label: 'Beneficiaries' }, { id: 'checkin', label: 'Check-ins' }, { id: 'account', label: 'Account' }].map(t => (
+        <div className="flex gap-1 mb-10 border-b border-gold/15 overflow-x-auto">
+          {[{ id: 'executor', label: 'Executor' }, { id: 'beneficiaries', label: 'Beneficiaries' }, { id: 'checkin', label: 'Check-ins' }, { id: 'notifications', label: 'Notifications' }, { id: 'activity', label: 'Activity' }, { id: 'account', label: 'Account' }].map(t => (
             <button key={t.id} onClick={() => setTab(t.id as any)}
-              className={`px-6 py-3 font-mono text-xs tracking-wider uppercase border-b-2 transition-all -mb-px ${tab === t.id ? 'border-gold text-gold' : 'border-transparent text-ash/40 hover:text-gold/60'}`}
+              className={`px-6 py-3 font-mono text-xs tracking-wider uppercase border-b-2 transition-all -mb-px whitespace-nowrap ${tab === t.id ? 'border-gold text-gold' : 'border-transparent text-ash/40 hover:text-gold/60'}`}
             >{t.label}</button>
           ))}
         </div>
@@ -138,34 +164,126 @@ export default function SettingsPage() {
         {/* Executor tab */}
         {tab === 'executor' && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg">
-            <h2 className="font-display text-2xl mb-3">Your Trusted Executor</h2>
-            <p className="text-ash text-sm leading-relaxed mb-8">This person will receive the vault trigger if you miss 3 check-ins. Choose your most trusted person — a spouse, sibling, or close friend.</p>
+            <h2 className="font-display text-2xl mb-3">Your Executors</h2>
+            <p className="text-ash text-sm leading-relaxed mb-8">Add up to 3 executors (1 primary + up to 2 backups). They will receive vault access requests if you miss check-ins.</p>
 
-            {executor && (
-              <div className="vault-card p-5 mb-6 flex items-center gap-4">
-                <div className="w-10 h-10 bg-gold/10 border border-gold/30 flex items-center justify-center text-lg">👤</div>
-                <div>
-                  <p className="text-gold font-medium">{executor.name}</p>
-                  <p className="font-mono text-gold/40 text-xs">{executor.email} · {executor.relationship}</p>
-                </div>
-                <span className={`ml-auto font-mono text-xs px-2 py-1 border ${executor.status === 'pending' ? 'border-gold/30 text-gold/50' : 'border-sage/50 text-sage'}`}>
-                  {executor.status.toUpperCase()}
-                </span>
+            {executors.length > 0 && (
+              <div className="space-y-2 mb-6">
+                {executors.map(e => (
+                  <div key={e._id} className="vault-card p-4 flex items-center gap-4">
+                    <div className="w-10 h-10 bg-gold/10 border border-gold/30 flex items-center justify-center text-lg">👤</div>
+                    <div className="flex-1">
+                      <p className="text-gold font-medium">{e.name}</p>
+                      <p className="font-mono text-gold/40 text-xs">{e.email} · {e.relationship}</p>
+                      <span className="text-gold/60 text-xs font-mono uppercase">{e.role} {e.order > 0 ? `#${e.order + 1}` : ''}</span>
+                    </div>
+                    <span className={`font-mono text-xs px-2 py-1 border ${e.status === 'pending' ? 'border-gold/30 text-gold/50' : 'border-sage/50 text-sage'}`}>
+                      {e.status.toUpperCase()}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
 
-            <div className="space-y-5">
-              {[{ key: 'name', label: 'Full Name', placeholder: 'Suresh Sharma' }, { key: 'email', label: 'Email', placeholder: 'suresh@gmail.com' }, { key: 'phone', label: 'Phone (notifications)', placeholder: '9876543210' }, { key: 'relationship', label: 'Relationship', placeholder: 'Brother / Friend / Spouse' }].map(f => (
-                <div key={f.key}>
-                  <label className="font-mono text-ash/50 text-xs tracking-[0.15em] uppercase block mb-2">{f.label}</label>
-                  <input value={(execForm as any)[f.key]} onChange={e => setExecForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder} className="virasat-input" />
+            <div className="border border-gold/15 p-6">
+              <p className="font-mono text-gold/40 text-xs tracking-[0.2em] uppercase mb-5">Add Executor</p>
+              <div className="space-y-5">
+                {[{ key: 'name', label: 'Full Name', placeholder: 'Suresh Sharma' }, { key: 'email', label: 'Email', placeholder: 'suresh@gmail.com' }, { key: 'phone', label: 'Phone (notifications)', placeholder: '9876543210' }, { key: 'relationship', label: 'Relationship', placeholder: 'Brother / Friend / Spouse' }].map(f => (
+                  <div key={f.key}>
+                    <label className="font-mono text-ash/50 text-xs tracking-[0.15em] uppercase block mb-2">{f.label}</label>
+                    <input value={(execForm as any)[f.key]} onChange={e => setExecForm(prev => ({ ...prev, [f.key]: e.target.value }))} placeholder={f.placeholder} className="virasat-input" />
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4">
+                <label className="font-mono text-ash/50 text-xs tracking-[0.15em] uppercase block mb-2">Role</label>
+                <select 
+                  value={(execForm as any).role || 'primary'} 
+                  onChange={e => setExecForm(prev => ({ ...prev, role: e.target.value }))}
+                  className="virasat-input"
+                >
+                  <option value="primary">Primary</option>
+                  <option value="backup">Backup</option>
+                </select>
+              </div>
+              <button onClick={saveExecutor} disabled={savingExec} className="btn-gold mt-6 w-full">
+                {savingExec ? 'Saving...' : 'Add Executor'}
+              </button>
+              <p className="font-mono text-ash/40 text-xs mt-4 text-center">They will receive an email when saved, explaining their role.</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Notifications tab */}
+        {tab === 'notifications' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg">
+            <h2 className="font-display text-2xl mb-3">Notification Preferences</h2>
+            <p className="text-ash text-sm leading-relaxed mb-8">Choose how you want to receive reminders and alerts.</p>
+
+            <div className="space-y-4">
+              {[
+                { key: 'email', label: 'Email Notifications', desc: 'Receive check-in reminders and alerts via email' },
+                { key: 'whatsapp', label: 'WhatsApp Notifications', desc: 'Receive reminders via WhatsApp (requires phone number)' },
+                { key: 'sms', label: 'SMS Notifications', desc: 'Receive reminders via SMS' },
+                { key: 'checkinReminders', label: 'Check-in Reminders', desc: 'Send me periodic check-in reminders' },
+                { key: 'executorAlerts', label: 'Executor Alerts', desc: 'Notify executor when I miss check-ins' },
+                { key: 'beneficiaryNotifications', label: 'Beneficiary Notifications', desc: 'Notify beneficiaries when vault is delivered' },
+              ].map(pref => (
+                <div key={pref.key} className="vault-card p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-gold font-medium text-sm">{pref.label}</p>
+                    <p className="font-mono text-gold/40 text-xs">{pref.desc}</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={(notificationPrefs as any)[pref.key]}
+                      onChange={e => setNotificationPrefs(prev => ({ ...prev, [pref.key]: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gold/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold"></div>
+                  </label>
                 </div>
               ))}
             </div>
-            <button onClick={saveExecutor} disabled={savingExec} className="btn-gold mt-8 w-full">
-              {savingExec ? 'Saving...' : executor ? 'Update Executor' : 'Save Executor'}
+
+            <button onClick={saveNotificationPrefs} disabled={savingFreq} className="btn-gold mt-8 w-full">
+              {savingFreq ? 'Saving...' : 'Save Preferences'}
             </button>
-            <p className="font-mono text-ash/40 text-xs mt-4 text-center">They will receive an email when saved, explaining their role.</p>
+          </motion.div>
+        )}
+
+        {/* Activity tab */}
+        {tab === 'activity' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg">
+            <h2 className="font-display text-2xl mb-3">Activity Log</h2>
+            <p className="text-ash text-sm leading-relaxed mb-8">Recent actions on your vault for transparency.</p>
+
+            {loadingActivities ? (
+              <div className="text-center py-8">
+                <div className="w-8 h-8 border border-gold/40 rotate-45 animate-spin mx-auto mb-4" />
+                <p className="font-mono text-gold/50 text-sm">Loading activity...</p>
+              </div>
+            ) : activities.length === 0 ? (
+              <div className="vault-card p-8 text-center">
+                <p className="font-mono text-gold/40 text-sm">No activity yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                {activities.map((activity: any) => (
+                  <div key={activity._id} className="vault-card p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono text-gold/60 text-xs uppercase tracking-wider">{activity.category}</span>
+                      <span className="font-mono text-gold/30 text-xs">{new Date(activity.createdAt).toLocaleDateString('en-IN')}</span>
+                    </div>
+                    <p className="text-gold/80 text-sm">{activity.description}</p>
+                    {activity.metadata && (
+                      <p className="font-mono text-gold/30 text-xs mt-1">{JSON.stringify(activity.metadata)}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
 

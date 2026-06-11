@@ -5,6 +5,7 @@ import { User } from '@/models/User'
 import { verifyPassword, signToken, setAuthCookie, clearAuthCookie } from '@/lib/auth'
 import { logAuditEvent, getClientInfo, AUDIT_ACTIONS } from '@/lib/audit'
 import { ok, badRequest, unauthorized, serverError } from '@/lib/api'
+import { checkRateLimit, getRateLimitIdentifier, RATE_LIMITS } from '@/lib/rateLimit'
 import { z } from 'zod'
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
@@ -17,6 +18,13 @@ const LoginSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     await connectDB()
+
+    const identifier = getRateLimitIdentifier(req)
+    const rateLimit = checkRateLimit(identifier, RATE_LIMITS.AUTH_LOGIN)
+    if (!rateLimit.allowed) {
+      return unauthorized(`Too many login attempts. Try again in ${Math.ceil((rateLimit.resetAt - Date.now()) / 60000)} minutes.`)
+    }
+
     const body = await req.json()
     const parsed = LoginSchema.safeParse(body)
 

@@ -80,8 +80,8 @@ export async function POST(req: NextRequest) {
           results.miss1++
 
         } else if (newMissedCount === 2) {
-          const executor = await Executor.findOne({ userId: user._id })
-          if (executor) {
+          const executors = await Executor.find({ userId: user._id }).lean()
+          for (const executor of executors) {
             await Promise.allSettled([
               sendEmergencyContactEmail({
                 name: executor.name,
@@ -129,27 +129,29 @@ export async function POST(req: NextRequest) {
             { $set: { status: 'pending_verification' } }
           )
 
-          const executor = await Executor.findOne({ userId: user._id })
-          if (executor) {
-            await Executor.updateOne(
-              { _id: executor._id },
+          const executors = await Executor.find({ userId: user._id }).lean()
+          if (executors.length) {
+            await Executor.updateMany(
+              { _id: { $in: executors.map(e => e._id) } },
               { $set: { status: 'notified', notifiedAt: now } }
             )
 
-            await Promise.allSettled([
-              sendExecutorTriggerEmail({
-                name: executor.name,
-                email: executor.email,
-                ownerName: user.name,
-                token: executor.uniqueToken,
-              }),
-              sendExecutorTriggerWhatsApp({
-                name: executor.name,
-                phone: executor.phone,
-                ownerName: user.name,
-                token: executor.uniqueToken,
-              }),
-            ])
+            for (const executor of executors) {
+              await Promise.allSettled([
+                sendExecutorTriggerEmail({
+                  name: executor.name,
+                  email: executor.email,
+                  ownerName: user.name,
+                  token: executor.uniqueToken,
+                }),
+                sendExecutorTriggerWhatsApp({
+                  name: executor.name,
+                  phone: executor.phone,
+                  ownerName: user.name,
+                  token: executor.uniqueToken,
+                }),
+              ])
+            }
           }
           results.triggered++
         }

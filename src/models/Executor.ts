@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose'
-import { ExecutorStatus } from '@/types'
+import { ExecutorStatus, ExecutorRole } from '@/types'
 
 export interface ExecutorDocument extends Document {
   userId: mongoose.Types.ObjectId
@@ -10,11 +10,14 @@ export interface ExecutorDocument extends Document {
   uniqueToken: string
   executorShare: string
   status: ExecutorStatus
+  role: ExecutorRole
+  order: number
   notifiedAt?: Date
   verifiedAt?: Date
   deathCertificateUrl?: string
   dateOfDeath?: string
   unlockDate?: Date
+  rejectionReason?: string
   createdAt: Date
   verifiedEmailAt?: Date
   identityVerified: boolean
@@ -31,12 +34,15 @@ const ExecutorSchema = new Schema<ExecutorDocument>({
   relationship: { type: String, required: true },
   uniqueToken: { type: String, required: true, unique: true },
   executorShare: { type: String, default: '' },
-  status: { type: String, enum: ['pending', 'notified', 'verified', 'cancelled'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'notified', 'verified', 'cancelled', 'awaiting_verification'], default: 'pending' },
+  role: { type: String, enum: ['primary', 'backup'], default: 'primary' },
+  order: { type: Number, default: 0 },
   notifiedAt: { type: Date },
   verifiedAt: { type: Date },
   deathCertificateUrl: { type: String },
   dateOfDeath: { type: String },
   unlockDate: { type: Date },
+  rejectionReason: { type: String },
   verifiedEmailAt: { type: Date },
   identityVerified: { type: Boolean, default: false },
   currentStep: { type: Number, default: 0 },
@@ -44,6 +50,7 @@ const ExecutorSchema = new Schema<ExecutorDocument>({
   vaultAccessToken: { type: String },
 }, { timestamps: true })
 
-ExecutorSchema.index({ userId: 1 })
+ExecutorSchema.index({ userId: 1, role: 1 })
+ExecutorSchema.index({ uniqueToken: 1 })
 
 export const Executor = mongoose.models.Executor || mongoose.model<ExecutorDocument>('Executor', ExecutorSchema)

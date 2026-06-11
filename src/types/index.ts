@@ -58,7 +58,10 @@ export interface IUser {
 
 // ─── EXECUTOR ────────────────────────────────────────────────────────────────
 
-export type ExecutorStatus = 'pending' | 'notified' | 'verified' | 'cancelled'
+export type ExecutorStatus = 'pending' | 'notified' | 'verified' | 'cancelled' | 'awaiting_verification'
+export type ExecutorRole = 'primary' | 'backup'
+export type DeathVerificationStatus = 'pending' | 'requires_action' | 'waiting' | 'delivered' | 'cancelled' | 'rejected'
+export type NotificationChannel = 'email' | 'whatsapp' | 'sms'
 
 export interface IExecutor {
   _id: string
@@ -70,11 +73,14 @@ export interface IExecutor {
   uniqueToken: string
   executorShare: string     // Shamir share 2 (QR code for executor)
   status: ExecutorStatus
+  role: ExecutorRole
+  order: number
   notifiedAt?: string
   verifiedAt?: string
   deathCertificateUrl?: string
   dateOfDeath?: string
   unlockDate?: string
+  rejectionReason?: string
   createdAt: string
 }
 
@@ -296,4 +302,17 @@ export interface AuthUser {
 export interface LoginResponse {
   user: AuthUser
   token: string
+}
+
+export interface DashStats {
+  userId: string
+  vaultItems: number
+  messages: number
+  beneficiaries: number
+  hasExecutor: boolean
+  lastCheckIn?: string
+  status?: string
+  missedCount: number
+  checkInFrequency?: string
+  snoozeUntil?: string
 }

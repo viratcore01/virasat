@@ -148,6 +148,16 @@ function RecoveryContent() {
           </div>
 
           <div className="bg-[#1B2F45] p-6 border border-[#C9A84C]/30">
+            <div className="bg-ember/20 border border-ember/40 p-4 mb-6">
+              <p className="text-ember/90 font-bold text-sm mb-2">⚠️ IMPORTANT — NOT LEGAL ADVICE</p>
+              <p className="text-gray-300 text-sm">
+                Virasat is a secure storage and delivery tool only. It does NOT replace a legal Will,
+                Trust, or court-mandated succession process. Recovering access to your vault does NOT
+                transfer legal ownership of assets. Your beneficiaries must still follow standard legal
+                procedures. Consult a qualified lawyer for estate planning.
+              </p>
+            </div>
+
             <p className="text-gray-300 mb-6 text-center">
               Recover your vault using your saved shares. This requires a 7-day waiting period for security.
             </p>

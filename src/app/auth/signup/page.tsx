@@ -41,7 +41,6 @@ export default function SignupPage() {
   })
 
   const nextStep = async () => {
-    // Consent step requires checkbox to be checked
     if (step === 0 && !consentChecked) {
       toast.error('Please accept the consent to continue')
       return
@@ -151,79 +150,102 @@ export default function SignupPage() {
             transition={{ duration: 0.3 }}
           >
             <form onSubmit={handleSubmit(onSubmit)}>
-              {/* Step 0 — Consent */}
               {step === 0 && (
                 <div className="space-y-8">
                   <div>
                     <h1 className="font-display text-4xl mb-2">Your Data, Your Control</h1>
                     <p className="text-ash text-sm">Before we create your vault, please read and accept our terms.</p>
                   </div>
-                  
+
                   <div className="bg-vault/50 border border-gold/20 p-6 space-y-4 max-h-80 overflow-y-auto">
                     <div>
-                      <h3 className="font-display text-gold text-lg mb-2">1. Data Collection & Purpose</h3>
+                      <h3 className="font-display text-gold text-lg mb-2">1. Legal Disclaimer</h3>
                       <p className="text-ash/70 text-sm leading-relaxed">
-                        We collect your name, email, phone, date of birth, and religion solely to create your digital legacy vault. 
+                        <strong className="text-ember">IMPORTANT:</strong> Virasat is a secure storage and delivery tool only. It does NOT replace a legal Will, Trust,
+                        or court-mandated succession process. We do not provide legal advice. Users must consult a
+                        qualified lawyer for estate planning and succession under applicable Indian laws (Hindu Succession
+                        Act, Muslim Personal Law, Indian Succession Act, etc.). Virasat delivers your encrypted data
+                        and instructions to designated beneficiaries after verified death. Actual ownership transfer of
+                        assets follows standard legal procedures.
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="font-display text-gold text-lg mb-2">2. Religion Selection</h3>
+                      <p className="text-ash/70 text-sm leading-relaxed">
+                        We ask for your religion for informational purposes. This selection does NOT create any religious
+                        or legal prescriptions. Virasat provides general guidance only. Always consult qualified legal counsel
+                        for advice specific to your personal law.
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="font-display text-gold text-lg mb-2">3. Zero-Knowledge Encryption</h3>
+                      <p className="text-ash/70 text-sm leading-relaxed">
+                        Your vault uses zero-knowledge encryption. Your master password never leaves your device
+                        and is never stored on our servers. We cannot access your messages or recover your data
+                        if you forget your master password.
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="font-display text-gold text-lg mb-2">4. No Automatic Asset Transfer</h3>
+                      <p className="text-ash/70 text-sm leading-relaxed">
+                        Virasat delivers encrypted information to beneficiaries but does NOT facilitate automatic asset
+                        transfer. Banks, property registrars, and other institutions require standard legal documentation
+                        regardless of Virasat&apos;s records.
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="font-display text-gold text-lg mb-2">5. Shamir Secret Sharing</h3>
+                      <p className="text-ash/70 text-sm leading-relaxed">
+                        Your master password is split into 3 shares (2-of-3 threshold). Losing your master password
+                        AND both shares results in permanent, irreversible data loss. We cannot recover your encrypted vault.
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="font-display text-gold text-lg mb-2">6. Data Collection & Privacy (DPDP Act)</h3>
+                      <p className="text-ash/70 text-sm leading-relaxed">
+                        We collect your name, email, phone, date of birth, and religion to create your vault.
                         Your messages and vault contents are encrypted with your master password — we never see or store them.
+                        Your data is processed in accordance with the DPDP Act, 2023.
                       </p>
                     </div>
                     <div>
-                      <h3 className="font-display text-gold text-lg mb-2">2. Data Storage & Retention</h3>
+                      <h3 className="font-display text-gold text-lg mb-2">7. Consent for Data Processing</h3>
                       <p className="text-ash/70 text-sm leading-relaxed">
-                        Your data is stored securely as long as your account is active. You can delete your account and all data at any time 
-                        from Settings. Upon deletion, all personal data and vault contents are permanently removed.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-display text-gold text-lg mb-2">3. Encryption & Security</h3>
-                      <p className="text-ash/70 text-sm leading-relaxed">
-                        Your vault uses zero-knowledge encryption. Your master password never leaves your device. 
-                        We cannot access your messages or recover your data if you forget your master password.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-display text-gold text-lg mb-2">4. Not a Legal Will</h3>
-                      <p className="text-ash/70 text-sm leading-relaxed">
-                        <strong className="text-ember">Important:</strong> Virasat is NOT a legal will, legal document, or substitute for legal advice. 
-                        It is a digital legacy tool for organizing and delivering messages to your loved ones. 
-                        For legal inheritance matters, please consult a qualified legal professional.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="font-display text-gold text-lg mb-2">5. Consent</h3>
-                      <p className="text-ash/70 text-sm leading-relaxed">
-                        By checking below, you consent to our collection and processing of your data as described above. 
-                        You can withdraw consent and delete your data at any time.
+                        By checking below, you consent to our collection and processing of your personal data as described
+                        above and in our Privacy Policy. You can withdraw consent and delete your data at any time.
                       </p>
                     </div>
                   </div>
 
+                  <div className="bg-ember/10 border border-ember/30 p-4">
+                    <p className="font-mono text-ember/80 text-xs">
+                      ⚠️ This is a digital legacy tool, not a legal will. For legal matters, consult a lawyer.
+                      Losing your master password AND shares = permanent data loss.
+                    </p>
+                  </div>
+
                   <label className="flex items-start gap-3 cursor-pointer">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={consentChecked}
                       onChange={(e) => setConsentChecked(e.target.checked)}
                       className="mt-1 w-5 h-5 accent-gold"
                     />
                     <span className="text-ash text-sm">
-                      I have read and agree to the <Link href="/privacy" target="_blank" className="text-gold underline">Privacy Policy</Link> and 
-                      understand that Virasat is NOT a legal will or legal service. I consent to the collection and processing of my data.
+                      I have read and agree to the <Link href="/terms" target="_blank" className="text-gold underline">Terms of Service</Link>,{' '}
+                      <Link href="/privacy" target="_blank" className="text-gold underline">Privacy Policy</Link>, and{' '}
+                      <Link href="/disclaimer" target="_blank" className="text-gold underline">Legal Disclaimer</Link>.
+                      I consent to the processing of my personal data as per the DPDP Act. I understand Virasat is NOT a legal will or legal service.
                     </span>
                   </label>
 
-                  <div className="bg-ember/10 border border-ember/30 p-4">
-                    <p className="font-mono text-ember/80 text-xs">
-                      ⚠️ This is a digital legacy tool, not a legal will. For legal matters, consult a lawyer.
-                    </p>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={nextStep} className="btn-outline-gold flex-1 text-sm" disabled>← Back</button>
+                    <button type="button" onClick={nextStep} className="btn-gold flex-1" disabled={!consentChecked}>Accept & Continue →</button>
                   </div>
-
-                  <button type="button" onClick={nextStep} className="btn-gold w-full" disabled={!consentChecked}>
-                    Accept & Continue →
-                  </button>
                 </div>
               )}
 
-              {/* Step 1 — Personal */}
               {step === 1 && (
                 <div className="space-y-8">
                   <div>
@@ -232,7 +254,8 @@ export default function SignupPage() {
                   </div>
                   <div className="bg-gold/5 border border-gold/20 p-4">
                     <p className="font-mono text-xs text-gold/80 leading-relaxed">
-                      <strong className="text-gold">IMPORTANT:</strong> Your Master Password encrypts your vault. We never store it. If you forget it, your data cannot be recovered. Write it down and keep it safe.
+                      <strong className="text-gold">IMPORTANT:</strong> Your Master Password encrypts your vault. We never store it.
+                      If you forget it, your data cannot be recovered. Write it down and keep it safe.
                     </p>
                   </div>
                   <div className="space-y-6">
@@ -258,27 +281,52 @@ export default function SignupPage() {
                 </div>
               )}
 
-              {/* Step 2 — Preferences */}
               {step === 2 && (
                 <div className="space-y-8">
                   <div>
-                    <h1 className="font-display text-4xl mb-2">Check-in frequency</h1>
-                    <p className="text-ash text-sm">How often should we ping you to confirm you&apos;re okay?</p>
+                    <h1 className="font-display text-4xl mb-2">Personal Details</h1>
+                    <p className="text-ash text-sm">We need a few details to create your account.</p>
                   </div>
-                  <div className="space-y-3">
-                    {[
-                      { value: 'weekly', label: 'Every week', desc: 'Recommended — highest safety' },
-                      { value: 'fortnightly', label: 'Every 2 weeks', desc: 'Good balance' },
-                      { value: 'monthly', label: 'Every month', desc: 'Minimal check-ins' },
-                    ].map(opt => (
-                      <label key={opt.value} className="cursor-pointer block">
-                        <input {...register('checkInFrequency')} type="radio" value={opt.value} className="peer sr-only" />
-                        <div className="border border-ash/20 p-4 peer-checked:border-gold peer-checked:bg-gold/5 hover:border-gold/30 transition-all">
-                          <div className="font-body font-medium text-sm">{opt.label}</div>
-                          <div className="font-mono text-ash/60 text-xs mt-1">{opt.desc}</div>
-                        </div>
-                      </label>
-                    ))}
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Full Name</label>
+                      <input {...register('name')} type="text" placeholder="Your full name" className="virasat-input" />
+                      {errors.name && <p className="text-ember text-xs mt-1 font-mono">{errors.name.message}</p>}
+                    </div>
+                    <div>
+                      <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Email</label>
+                      <input {...register('email')} type="email" placeholder="you@example.com" className="virasat-input" />
+                      {errors.email && <p className="text-ember text-xs mt-1 font-mono">{errors.email.message}</p>}
+                    </div>
+                    <div>
+                      <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Phone</label>
+                      <input {...register('phone')} type="tel" placeholder="10-digit mobile number" className="virasat-input" />
+                      {errors.phone && <p className="text-ember text-xs mt-1 font-mono">{errors.phone.message}</p>}
+                    </div>
+                    <div>
+                      <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Date of Birth</label>
+                      <input {...register('dob')} type="date" className="virasat-input" />
+                      {errors.dob && <p className="text-ember text-xs mt-1 font-mono">{errors.dob.message}</p>}
+                    </div>
+                    <div>
+                      <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Religion (for guidance only)</label>
+                      <select {...register('religion')} className="virasat-input">
+                        <option value="hindu">Hindu</option>
+                        <option value="muslim">Muslim</option>
+                        <option value="christian">Christian</option>
+                        <option value="sikh">Sikh</option>
+                        <option value="jain">Jain</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Check-in Frequency</label>
+                      <select {...register('checkInFrequency')} className="virasat-input">
+                        <option value="weekly">Every week</option>
+                        <option value="fortnightly">Every 2 weeks</option>
+                        <option value="monthly">Every month</option>
+                      </select>
+                    </div>
                   </div>
                   <div className="flex gap-3">
                     <button type="button" onClick={() => setStep(1)} className="btn-outline-gold flex-1 text-sm">← Back</button>

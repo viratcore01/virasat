@@ -352,6 +352,15 @@ export default function VaultPage() {
                 <button onClick={() => setShowAdd(false)} className="text-gold/40 hover:text-gold text-xl">✕</button>
               </div>
 
+              {/* Legal Disclaimer */}
+              <div className="bg-ember/10 border border-ember/25 p-4 mb-6">
+                <p className="text-ember/80 text-xs leading-relaxed">
+                  <strong className="uppercase tracking-wider">Legal Notice:</strong> Virasat is a storage and delivery tool only.
+                  It does NOT replace a legal Will or court-mandated succession process. Actual asset ownership transfer
+                  requires valid legal documentation per applicable Indian laws. Consult a qualified lawyer.
+                </p>
+              </div>
+
               {/* Category */}
               <p className="font-mono text-gold/40 text-xs tracking-[0.2em] uppercase mb-3">Category</p>
               <div className="grid grid-cols-3 gap-2 mb-6">

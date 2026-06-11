@@ -273,3 +273,5 @@ export const AuditLog = mongoose.models.AuditLog ||
 // Re-export User and Executor models
 export { User } from './User'
 export { Executor } from './Executor'
+export { DeathCertificate } from './DeathCertificate'
+export { UserActivity } from './UserActivity'

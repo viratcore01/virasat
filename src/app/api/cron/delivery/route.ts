@@ -1,21 +1,13 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest } from 'next/server'
-import crypto from 'crypto'
 import { connectDB } from '@/lib/db'
-import { Beneficiary, ExecutorRequest, Message } from '@/models/index'
+import { ExecutorRequest } from '@/models/index'
 import { User } from '@/models/User'
-import { ok, serverError } from '@/lib/api'
-import { sendFinalMessageDeliveryEmail } from '@/lib/email'
+import { ok, serverError, badRequest } from '@/lib/api'
+import { sendDeliveryNotificationEmail } from '@/lib/email'
+import { sendDeliveryNotificationWhatsApp } from '@/lib/whatsapp'
 
-type OwnerLean = { _id: { toString: () => string }; name: string }
-type BeneficiaryLean = {
-  _id: { toString: () => string }
-  name: string
-  email: string
-  phone: string
-  relationship: string
-  deliveryToken?: string
-}
+const WAITING_STATUSES = ['verified', 'waiting']
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,115 +21,116 @@ export async function POST(req: NextRequest) {
     await connectDB()
     const now = new Date()
 
-    const results = {
-      unlockedUsers: 0,
-      deliveredOnDate: 0,
-      deliveredOnDeath: 0,
-      notifications: 0,
-      errors: 0,
-    }
-
-    const onDateMessages = await Message.find({
-      delivered: false,
-      triggerType: 'on_date',
-      triggerDate: { $lte: now },
-    }).lean()
-
-    if (onDateMessages.length) {
-      results.deliveredOnDate = onDateMessages.length
-    }
-
-    const unlocks = await ExecutorRequest.find({
+    const readyToDeliver = await ExecutorRequest.find({
       status: 'waiting',
       unlockDate: { $lte: now },
     }).lean()
 
-    const unlockUserIds = unlocks.map(r => r.userId)
-
-    const onDeathMessages = unlockUserIds.length
-      ? await Message.find({
-        delivered: false,
-        triggerType: 'on_death',
-        userId: { $in: unlockUserIds },
-      }).lean()
-      : []
-
-    if (onDeathMessages.length) {
-      results.deliveredOnDeath = onDeathMessages.length
+    const results = {
+      processed: 0,
+      delivered: 0,
+      skipped: 0,
+      errors: 0,
     }
 
-    if (unlocks.length) {
-      results.unlockedUsers = unlocks.length
-      await ExecutorRequest.updateMany(
-        { _id: { $in: unlocks.map(r => r._id) } },
-        { $set: { status: 'delivered' } }
-      )
-      await User.updateMany(
-        { _id: { $in: unlockUserIds } },
-        { $set: { status: 'delivered' } }
-      )
-    }
-
-    const allMessages = [...onDateMessages, ...onDeathMessages]
-    if (!allMessages.length) {
-      return ok(results, 'No deliveries due')
-    }
-
-    await Message.updateMany(
-      { _id: { $in: allMessages.map(m => m._id) } },
-      { $set: { delivered: true, deliveredAt: now } }
-    )
-
-    const beneficiaryIds = Array.from(new Set(allMessages.map(m => m.assignedTo.toString())))
-    const userIds = Array.from(new Set(allMessages.map(m => m.userId.toString())))
-
-    const [beneficiaries, owners] = await Promise.all([
-      Beneficiary.find({ _id: { $in: beneficiaryIds } }).lean<BeneficiaryLean[]>(),
-      User.find({ _id: { $in: userIds } }).select('name').lean<OwnerLean[]>(),
-    ])
-
-    const ownerById = new Map(owners.map(o => [o._id.toString(), o.name]))
-    const beneficiaryById = new Map(beneficiaries.map(b => [b._id.toString(), b]))
-
-    const grouped = new Map<string, { beneficiary: any; ownerName: string; messages: any[] }>()
-
-    for (const msg of allMessages) {
-      const ben = beneficiaryById.get(msg.assignedTo.toString())
-      if (!ben) continue
-      const ownerName = ownerById.get(msg.userId.toString()) || 'Virasat user'
-      const entry = grouped.get(ben._id.toString()) || { beneficiary: ben, ownerName, messages: [] }
-      entry.messages.push(msg)
-      grouped.set(ben._id.toString(), entry)
-    }
-
-    for (const entry of Array.from(grouped.values())) {
+    for (const request of readyToDeliver) {
       try {
-        let token = entry.beneficiary.deliveryToken
-        if (!token) {
-          token = crypto.randomBytes(32).toString('base64url')
-          await Beneficiary.updateOne({ _id: entry.beneficiary._id }, { $set: { deliveryToken: token } })
+        results.processed++
+
+        const [user, executor] = await Promise.all([
+          User.findById(request.userId).lean(),
+          ExecutorRequest.findOne({
+            userId: request.userId,
+            status: { $nin: ['delivered', 'cancelled'] },
+          }).lean(),
+        ])
+
+        if (!user || !executor) {
+          results.skipped++
+          continue
         }
 
-        const deliveryUrl = `${process.env.NEXT_PUBLIC_APP_URL}/delivery/${token}`
-        const count = entry.messages.length
+        await ExecutorRequest.updateOne(
+          { _id: request._id },
+          { $set: { status: 'delivered' } }
+        )
+
+        await User.updateOne(
+          { _id: user._id },
+          { $set: { status: 'delivered' } }
+        )
 
         await Promise.allSettled([
-          sendFinalMessageDeliveryEmail({
-            name: entry.beneficiary.name,
-            email: entry.beneficiary.email,
-            ownerName: entry.ownerName,
-            deliveryUrl,
-            count,
-          })
+          sendDeliveryNotificationEmail({
+            name: user.name,
+            email: user.email,
+            ownerName: user.name,
+          }),
+          sendDeliveryNotificationWhatsApp({
+            name: user.name,
+            phone: user.phone,
+            ownerName: user.name,
+          }),
         ])
-        results.notifications++
+
+        results.delivered++
       } catch (err) {
-        console.error('Delivery notification error:', err)
+        console.error(`Error processing request ${request._id}:`, err)
         results.errors++
       }
     }
 
-    return ok(results, 'Delivery cron complete')
+    return ok(results, 'Waiting period cron complete')
+  } catch (err) {
+    return serverError(err)
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const userId = searchParams.get('userId')
+
+    await connectDB()
+
+    const query: any = { status: { $nin: ['delivered', 'cancelled'] } }
+    if (userId) query.userId = userId
+
+    const requests = await ExecutorRequest.find(query)
+      .sort({ createdAt: -1 })
+      .lean()
+
+    const enriched = await Promise.all(
+      requests.map(async (req: any) => {
+        const [user, executor] = await Promise.all([
+          User.findById(req.userId).select('name email').lean(),
+          Executor.findById(req.executorId).select('name email').lean(),
+        ])
+
+        const daysRemaining = req.unlockDate
+          ? Math.max(0, Math.ceil((new Date(req.unlockDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+          : null
+
+        return {
+          _id: req._id,
+          userId: req.userId,
+          executorId: req.executorId,
+          status: req.status,
+          dateOfDeath: req.dateOfDeath,
+          unlockDate: req.unlockDate,
+          daysRemaining,
+          user: user
+            ? { name: user.name, email: user.email }
+            : null,
+          executor: executor
+            ? { name: executor.name, email: executor.email }
+            : null,
+          createdAt: req.createdAt,
+        }
+      })
+    )
+
+    return ok(enriched)
   } catch (err) {
     return serverError(err)
   }

@@ -1,99 +1,152 @@
 export const dynamic = 'force-dynamic'
-import Stripe from 'stripe'
+import { NextRequest } from 'next/server'
+import crypto from 'crypto'
 import { connectDB } from '@/lib/db'
-import { User } from '@/models/User'
+import { User, Subscription } from '@/models'
 import { ok, badRequest } from '@/lib/api'
-import { FREE_ONLY_MODE } from '@/lib/flags'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
-  apiVersion: '2024-06-20',
-})
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder'
+function verifyRazorpaySignature(body: string, signature: string): boolean {
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET || process.env.RAZORPAY_KEY_SECRET!
+  const expected = crypto.createHmac('sha256', secret).update(body).digest('hex')
+  return signature === expected
+}
 
-export async function POST(req: Request) {
-  if (FREE_ONLY_MODE) return ok({ received: true, skipped: true })
-
-  const sig = req.headers.get('stripe-signature') as string
+export async function POST(req: NextRequest) {
   const body = await req.text()
+  const signature = req.headers.get('x-razorpay-signature') || ''
 
-  let event: Stripe.Event
-
-  try {
-    event = stripe.webhooks.constructEvent(body, sig, endpointSecret)
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err)
+  if (!verifyRazorpaySignature(body, signature)) {
+    console.error('Razorpay webhook signature verification failed')
     return badRequest('Invalid signature')
   }
 
+  const event = JSON.parse(body)
   await connectDB()
 
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session
-      const userId = session.metadata?.userId
+  try {
+    switch (event.event) {
+      case 'subscription.activated': {
+        const sub = event.payload.subscription
+        const userId = sub.user_id
 
-      if (userId) {
+        await Subscription.findOneAndUpdate(
+          { razorpaySubscriptionId: sub.id },
+          {
+            $set: {
+              plan: 'premium',
+              status: 'active',
+              currentPeriodEnd: new Date(sub.current_end * 1000),
+              currentPeriodStart: new Date(sub.current_start * 1000),
+            },
+          },
+          { upsert: true, new: true }
+        )
+
+        await User.updateOne(
+          { _id: userId },
+          { $set: { plan: 'premium', subscriptionStatus: 'active' } }
+        )
+        break
+      }
+
+      case 'subscription.charged': {
+        const sub = event.payload.subscription
+        const userId = sub.user_id
+
+        await Subscription.findOneAndUpdate(
+          { razorpaySubscriptionId: sub.id },
+          {
+            $set: {
+              currentPeriodEnd: new Date(sub.current_end * 1000),
+              currentPeriodStart: new Date(sub.current_start * 1000),
+              status: 'active',
+            },
+          }
+        )
+
         await User.updateOne(
           { _id: userId },
           { $set: { subscriptionStatus: 'active' } }
         )
+        break
       }
-      break
-    }
 
-    case 'invoice.payment_succeeded': {
-      const invoice = event.data.object as any // Stripe.Invoice
-      const subscriptionId = typeof invoice.subscription === 'string'
-        ? invoice.subscription
-        : (invoice.subscription as any)?.id
+      case 'subscription.paused':
+      case 'subscription.pending': {
+        const sub = event.payload.subscription
+        const userId = sub.user_id
 
-      if (!subscriptionId) break
-
-      const user = await User.findOne({ subscriptionId })
-      if (user) {
-        await User.updateOne(
-          { _id: user._id },
-          {
-            $set: {
-              subscriptionStatus: 'active',
-              subscriptionCurrentEnd: new Date(invoice.period_end * 1000)
-            }
-          }
+        await Subscription.findOneAndUpdate(
+          { razorpaySubscriptionId: sub.id },
+          { $set: { status: 'pending' } }
         )
-      }
-      break
-    }
 
-    case 'invoice.payment_failed': {
-      const invoice = event.data.object as any // Stripe.Invoice
-      const subscriptionId = typeof invoice.subscription === 'string'
-        ? invoice.subscription
-        : (invoice.subscription as any)?.id
-
-      if (!subscriptionId) break
-
-      const user = await User.findOne({ subscriptionId })
-      if (user) {
         await User.updateOne(
-          { _id: user._id },
+          { _id: userId },
           { $set: { subscriptionStatus: 'past_due' } }
         )
+        break
       }
-      break
-    }
 
-    case 'customer.subscription.deleted': {
-      const subscription = event.data.object as Stripe.Subscription
-      const user = await User.findOne({ subscriptionId: subscription.id })
-      if (user) {
-        await User.updateOne(
-          { _id: user._id },
-          { $set: { subscriptionStatus: 'cancelled' } }
+      case 'subscription.cancelled': {
+        const sub = event.payload.subscription
+        const userId = sub.user_id
+
+        await Subscription.findOneAndUpdate(
+          { razorpaySubscriptionId: sub.id },
+          { $set: { status: 'cancelled', cancelledAt: new Date() } }
         )
-      }
-      break
-    }
-  }
 
-  return ok({ received: true })
+        await User.findOneAndUpdate(
+          { razorpayCustomerId: userId },
+          { $set: { plan: 'free', subscriptionStatus: 'cancelled' } }
+        )
+        break
+      }
+
+      case 'subscription.completed': {
+        const sub = event.payload.subscription
+        const userId = sub.user_id
+
+        await Subscription.findOneAndUpdate(
+          { razorpaySubscriptionId: sub.id },
+          { $set: { status: 'expired' } }
+        )
+
+        await User.updateOne(
+          { _id: userId },
+          { $set: { plan: 'free', subscriptionStatus: 'expired' } }
+        )
+        break
+      }
+
+      case 'payment.failed': {
+        const payment = event.payload.payment
+        const subId = payment.subscription_id
+        if (!subId) break
+
+        await Subscription.findOneAndUpdate(
+          { razorpaySubscriptionId: subId },
+          { $set: { status: 'past_due' } }
+        )
+
+        const subscription = await Subscription.findOne({ razorpaySubscriptionId: subId })
+        if (subscription) {
+          await User.updateOne(
+            { _id: subscription.userId },
+            { $set: { subscriptionStatus: 'past_due' } }
+          )
+        }
+        break
+      }
+
+      default:
+        break
+    }
+
+    return ok({ received: true })
+  } catch (err) {
+    console.error('Webhook processing failed:', err)
+    return badRequest('Webhook processing failed')
+  }
 }

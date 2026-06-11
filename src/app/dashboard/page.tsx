@@ -5,19 +5,10 @@ import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { clearSessionKey } from '@/lib/crypto'
+import { DashStats } from '@/types'
+import { Crown, Zap } from 'lucide-react'
 
-interface DashStats {
-  userId: string
-  vaultItems: number
-  messages: number
-  beneficiaries: number
-  hasExecutor: boolean
-  lastCheckIn: string
-  status: string
-  missedCount: number
-  checkInFrequency: string
-  snoozeUntil?: string
-}
+const FIRST_LOGIN_BANNER_KEY = 'virasat_legal_banner_dismissed'
 
 const VAULT_CATEGORIES = [
   { key: 'bank_account', label: 'Bank Accounts', icon: '🏦' },
@@ -36,10 +27,40 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [snoozeDays, setSnoozeDays] = useState(14)
   const [showSnooze, setShowSnooze] = useState(false)
+  const [showLegalBanner, setShowLegalBanner] = useState(false)
+  const [plan, setPlan] = useState<'free' | 'premium'>('free')
+  const [assetCount, setAssetCount] = useState(0)
 
   useEffect(() => {
+    const dismissed = sessionStorage.getItem(FIRST_LOGIN_BANNER_KEY)
+    if (!dismissed) {
+      setShowLegalBanner(true)
+    }
     fetchStats()
   }, [])
+
+  useEffect(() => {
+    if (stats?.userId) {
+      fetch('/api/auth/me')
+        .then(res => res.json())
+        .then(json => {
+          if (json.success && json.data) {
+            setPlan(json.data.plan || 'free')
+            setAssetCount(stats?.vaultItems ?? 0)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [stats?.userId])
+
+  const assetLimit = plan === 'premium' ? Infinity : 15
+  const assetUsagePercent = assetLimit === Infinity ? 0 : Math.round((assetCount / assetLimit) * 100)
+  const showUpgradePrompt = plan === 'free' && assetCount >= 12
+
+  const dismissLegalBanner = () => {
+    sessionStorage.setItem(FIRST_LOGIN_BANNER_KEY, 'true')
+    setShowLegalBanner(false)
+  }
 
   const fetchStats = async () => {
     try {
@@ -50,7 +71,6 @@ export default function DashboardPage() {
         fetch('/api/executor'),
         fetch('/api/auth/me'),
       ])
-
       const [vault, messages, benef, exec, user] = await Promise.all([
         vaultRes.json(),
         messagesRes.json(),
@@ -58,7 +78,6 @@ export default function DashboardPage() {
         execRes.json(),
         userRes.json(),
       ])
-
       setStats({
         userId: user.data?._id || '',
         vaultItems: vault.data?.length ?? 0,
@@ -156,10 +175,72 @@ export default function DashboardPage() {
 
       {/* Main content */}
       <div className="ml-64 p-10">
+        {/* Legal Disclaimer Banner */}
+        {showLegalBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-ember/10 border border-ember/40 p-5 mb-8 flex items-start justify-between gap-4"
+          >
+            <div className="flex-1">
+              <p className="text-ember/90 font-bold text-sm tracking-wider uppercase mb-2">
+                ⚠️ Important — Not a Legal Service
+              </p>
+              <p className="text-ash/70 text-sm leading-relaxed">
+                Virasat is a secure storage and delivery tool only. It does NOT replace a legal Will,
+                Trust, or court-mandated succession process. Actual asset transfer requires valid legal
+                documentation per applicable Indian laws. <Link href="/disclaimer" className="text-gold underline hover:text-gold-dark">Read full disclaimer →</Link>
+              </p>
+            </div>
+            <button onClick={dismissLegalBanner} className="text-ember/50 hover:text-ember transition-colors text-xl leading-none mt-1">
+              ✕
+            </button>
+          </motion.div>
+        )}
+
         {/* Header */}
         <div className="mb-10">
-          <p className="font-mono text-ash/60 text-xs tracking-[0.3em] uppercase mb-2">Dashboard</p>
-          <h1 className="font-display text-4xl">Your Legacy Vault</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="font-mono text-ash/60 text-xs tracking-[0.3em] uppercase mb-2">Dashboard</p>
+              <h1 className="font-display text-4xl">Your Legacy Vault</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              {plan === 'premium' ? (
+                <span className="flex items-center gap-1 bg-gold/10 border border-gold/30 px-3 py-1 text-gold text-xs font-mono">
+                  <Crown className="w-3 h-3" /> PREMIUM
+                </span>
+              ) : (
+                <Link href="/pricing" className="flex items-center gap-1 bg-ember/10 border border-ember/30 px-3 py-1 text-ember text-xs font-mono hover:bg-ember/20 transition-colors">
+                  <Zap className="w-3 h-3" /> UPGRADE
+                </Link>
+              )}
+            </div>
+          </div>
+          {plan === 'free' && (
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-mono text-ash/50 text-xs">Plan Usage</span>
+                <span className="font-mono text-ash/60 text-xs">{assetCount} / {assetLimit} assets</span>
+              </div>
+              <div className="w-full bg-vault-light/50 h-1.5 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${assetUsagePercent >= 90 ? 'bg-ember' : 'bg-gold'}`}
+                  style={{ width: `${Math.min(100, assetUsagePercent)}%` }}
+                />
+              </div>
+              {showUpgradePrompt && (
+                <div className="mt-3 bg-ember/10 border border-ember/30 p-3 flex items-center justify-between">
+                  <p className="text-ember/80 text-xs font-mono">
+                    You're approaching your Free plan limit. Upgrade to Premium for unlimited assets.
+                  </p>
+                  <Link href="/pricing" className="text-xs font-mono text-gold hover:text-gold-dark whitespace-nowrap ml-3">
+                    Upgrade →
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Status alert */}

@@ -2,11 +2,13 @@
   "crons": [
     {
       "path": "/api/cron/checkin",
-      "schedule": "30 3 * * 0"
+      "schedule": "0 4 * * *"
     },
     {
-      "path": "/api/cron/delivery",
-      "schedule": "45 3 * * *"
+      "path": "/api/cron/waiting-period",
+      "schedule": "0 5 * * *"
     }
+  ]
+}
   ]
 }

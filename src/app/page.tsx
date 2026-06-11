@@ -266,6 +266,20 @@ export default function HomePage() {
         <div className="absolute -top-[20%] left-[10%] w-[40%] h-[140%] bg-gold opacity-10 blur-[100px] rounded-full rotate-45 transform pointer-events-none"></div>
         <div className="absolute -top-[20%] right-[10%] w-[40%] h-[140%] bg-vault-light opacity-30 blur-[100px] rounded-full -rotate-45 transform pointer-events-none"></div>
 
+        {/* Legal Disclaimer Banner */}
+        <div className="relative z-10 max-w-3xl mx-auto mb-8">
+          <div className="bg-ember/15 border border-ember/40 p-5 rounded-sm">
+            <p className="text-ember/90 font-bold text-sm tracking-wider uppercase mb-2">
+              ⚠️ Important — Not a Legal Service
+            </p>
+            <p className="text-gold/80 text-sm leading-relaxed">
+              Virasat is a secure storage and delivery tool only. It does NOT replace a legal Will,
+              Trust, or court-mandated succession process. Actual asset transfer requires valid legal
+              documentation per applicable Indian laws. <Link href="/disclaimer" className="underline hover:text-gold">Full Disclaimer →</Link>
+            </p>
+          </div>
+        </div>
+
         <div className="relative z-10 max-w-3xl mx-auto premium-glass p-12 md:p-20 rounded-2xl border border-gold/20 shadow-vault-deep">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -292,17 +306,28 @@ export default function HomePage() {
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer className="bg-vault-dark border-t border-gold/10 px-10 py-16 flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
-        <div className="flex items-center gap-3 relative z-10 hover:opacity-100 opacity-80 transition-opacity cursor-none">
-          <div className="w-6 h-6 border border-gold/40 rotate-45 flex items-center justify-center">
-            <div className="w-1.5 h-1.5 bg-gold/70" />
+      <footer className="bg-vault-dark border-t border-gold/10 px-10 py-12 relative overflow-hidden">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
+          <div className="flex items-center gap-3 hover:opacity-100 opacity-80 transition-opacity cursor-none">
+            <div className="w-6 h-6 border border-gold/40 rotate-45 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 bg-gold/70" />
+            </div>
+            <span className="font-display text-gold/70 tracking-[0.3em] text-sm">VIRASAT</span>
           </div>
-          <span className="font-display text-gold/70 tracking-[0.3em] text-sm">VIRASAT</span>
+          <div className="flex items-center gap-6">
+            <Link href="/terms" className="font-mono text-gold/30 text-xs tracking-wider hover:text-gold/60 transition-colors">Terms</Link>
+            <Link href="/privacy" className="font-mono text-gold/30 text-xs tracking-wider hover:text-gold/60 transition-colors">Privacy Policy</Link>
+            <Link href="/disclaimer" className="font-mono text-gold/30 text-xs tracking-wider hover:text-gold/60 transition-colors">Disclaimer</Link>
+          </div>
+          <p className="font-mono text-gold/30 text-xs tracking-wider">
+            © {new Date().getFullYear()} Virasat
+          </p>
         </div>
-        <p className="font-mono text-gold/40 text-xs tracking-[0.2em] text-center relative z-10">
-          A LOVE LETTER TO YOUR FAMILY&apos;S FUTURE
-        </p>
-        <p className="font-mono text-gold/30 text-xs tracking-wider relative z-10">© {new Date().getFullYear()} Virasat</p>
+        <div className="mt-6 pt-4 border-t border-gold/10 text-center relative z-10">
+          <p className="font-mono text-gold/20 text-[10px] tracking-wider">
+            Virasat is a secure storage and delivery tool only. NOT a legal will or legal service. Actual asset transfer requires valid legal documentation.
+          </p>
+        </div>
       </footer>
     </>
   )
