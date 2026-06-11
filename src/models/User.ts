@@ -19,6 +19,7 @@ export interface UserDocument extends Document {
   snoozeUntil?: Date
   consentGiven: boolean
   consentAt?: Date
+  consentVersion: string                    // DPDP Act compliance: Track which version they consented to
   status: UserStatus
   inactivityDays: number
   subscriptionStatus: 'free' | 'pending' | 'active' | 'past_due' | 'cancelled'
@@ -35,6 +36,7 @@ export interface UserDocument extends Document {
   lastReminderSent?: Date
   nextReviewDate?: Date
   vaultScore?: number
+  dataRetentionUntil?: Date                 // DPDP Act compliance: When to delete data after user request
   createdAt: Date
   updatedAt: Date
 }
@@ -56,6 +58,7 @@ const UserSchema = new Schema<UserDocument>({
   snoozeUntil: { type: Date },
   consentGiven: { type: Boolean, default: false },
   consentAt: { type: Date },
+  consentVersion: { type: String, default: '1.0' },
   status: { type: String, enum: ['active', 'pending_verification', 'verified_deceased', 'delivered'], default: 'active' },
   inactivityDays: { type: Number, default: 0 },
   subscriptionStatus: { type: String, enum: ['free', 'pending', 'active', 'past_due', 'cancelled'], default: 'free' },
@@ -72,10 +75,12 @@ const UserSchema = new Schema<UserDocument>({
   lastReminderSent: { type: Date },
   nextReviewDate: { type: Date },
   vaultScore: { type: Number },
+  dataRetentionUntil: { type: Date },
 }, { timestamps: true })
 
 UserSchema.index({ status: 1 })
 UserSchema.index({ lastCheckIn: 1, status: 1 })
+UserSchema.index({ dataRetentionUntil: 1 })
 
 function decryptUserFields(doc: UserDocument) {
   if (!doc.isDataEncrypted) return
