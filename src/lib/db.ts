@@ -16,9 +16,13 @@ global.mongooseCache = cached
 export async function connectDB(): Promise<typeof mongoose> {
   const MONGODB_URI = process.env.MONGODB_URI
 
-  if (!MONGODB_URI) {
+  if (!MONGODB_URI || MONGODB_URI === 'your_value_here' || MONGODB_URI.includes('placeholder')) {
+    const hint = process.env.NEXT_PUBLIC_FREE_ONLY === 'true'
+      ? 'Set a real MongoDB Atlas URI in .env.local, or run a local MongoDB instance.'
+      : 'Set a real MongoDB Atlas URI in .env.local and redeploy.'
+
     throw new Error(
-      'MONGODB_URI is not defined. Please set it in your environment variables.\n' +
+      `MongoDB URI is not configured or is a placeholder.\n${hint}\n` +
       'Get a free MongoDB Atlas connection string at: https://mongodb.com/atlas'
     )
   }
@@ -28,14 +32,18 @@ export async function connectDB(): Promise<typeof mongoose> {
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
-      maxPoolSize: 10, // Maintain up to 10 socket connections
+      serverSelectionTimeoutMS: 8000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
     }).catch(err => {
+      const isDnsErr = /querySrv ENOTFOUND|ECONNREFUSED|getaddrinfo ENOTFOUND/i.test(err.message || '')
+      const tip = isDnsErr
+        ? 'DNS lookup failed. Check your MongoDB Atlas cluster hostname, network, and IP allowlist.'
+        : 'Verify MongoDB URI, credentials, IP whitelist, and network access.'
+
       console.error('MongoDB connection error:', err.message)
       throw new Error(
-        `Failed to connect to MongoDB: ${err.message}\n` +
-        'Please check your MONGODB_URI and network connection.'
+        `Failed to connect to MongoDB: ${err.message}\n${tip}`
       )
     })
   }
@@ -45,7 +53,7 @@ export async function connectDB(): Promise<typeof mongoose> {
     console.log('✅ MongoDB connected successfully')
     return cached.conn
   } catch (error) {
-    cached.promise = null // Reset on failure so we can retry
+    cached.promise = null
     throw error
   }
 }
