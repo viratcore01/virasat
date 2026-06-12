@@ -57,23 +57,47 @@ Include:
         return badRequest('Invalid type')
     }
 
-    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: `You are a legal expert specializing in Indian inheritance law and estate planning.\n\n${prompt}` }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2000,
+    const payload = {
+      contents: [
+        {
+          parts: [
+            { text: `You are a legal expert specializing in Indian inheritance law and estate planning.\n\n${prompt}` }
+          ]
         }
-      })
-    })
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2000,
+      }
+    }
+
+    const geminiRes = await fetchWithBackoff(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      payload
+    )
+
+    if (!geminiRes.ok && geminiRes.status === 429) {
+      const fallback = await fetchWithBackoff(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        payload
+      )
+
+      if (fallback.ok) {
+        const geminiData = await fallback.json()
+        const generatedContent = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text
+        if (generatedContent) return ok({ content: generatedContent })
+        return serverError('AI generation failed')
+      }
+
+      const errText = await fallback.text()
+      console.error('Gemini fallback error:', fallback.status, errText)
+      try {
+        const errJson = JSON.parse(errText)
+        return serverError(errJson?.error?.message || 'AI generation failed')
+      } catch {
+        return serverError(`AI generation failed: ${fallback.status}`)
+      }
+    }
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text()
@@ -96,4 +120,15 @@ Include:
     console.error('AI generation error:', err)
     return serverError(err)
   }
+}
+
+async function fetchWithBackoff(url: string, body: any, retries = 2): Promise<Response> {
+  const headers = { 'Content-Type': 'application/json' }
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) })
+    if (res.ok || res.status !== 429) return res
+    const delay = Math.min(1000 * 2 ** attempt, 4000)
+    await new Promise(r => setTimeout(r, delay))
+  }
+  return fetch(url, { method: 'POST', headers, body: JSON.stringify(body) })
 }
