@@ -36,6 +36,10 @@ export default function HomePage() {
 
   return (
     <>
+      {/* Beta Banner */}
+      <div className="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-gold/90 to-amber-600/90 text-vault-dark text-center py-2 px-4 text-sm font-medium tracking-wide">
+        🧪 Virasat is in <strong>Closed Beta</strong> — Invite-only. <Link href="/beta" className="underline font-semibold">Request access</Link>
+      </div>
 
       {/* ─── NAV ─── */}
       <nav className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-10 py-6 transition-all duration-500 max-w-[100vw] overflow-hidden ${isScrolled ? 'bg-vault-dark/80 backdrop-blur-md border-b border-gold/10 !py-4 shadow-vault-deep' : 'mix-blend-normal'}`}>

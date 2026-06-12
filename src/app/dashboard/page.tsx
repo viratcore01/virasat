@@ -175,6 +175,20 @@ export default function DashboardPage() {
 
       {/* Main content */}
       <div className="ml-64 p-10">
+        {/* Beta Mode Banner */}
+        <div className="bg-gold/10 border border-gold/30 p-4 mb-6 flex items-center justify-between rounded">
+          <div className="flex items-center gap-3">
+            <span className="text-gold text-lg">🧪</span>
+            <div>
+              <p className="text-gold font-bold text-sm tracking-wider uppercase">Beta Mode</p>
+              <p className="text-ash/70 text-xs">Closed beta — invite friends/family only.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-gold/70">support@virasat.in</span>
+          </div>
+        </div>
+
         {/* Legal Disclaimer Banner */}
         {showLegalBanner && (
           <motion.div
@@ -197,6 +211,29 @@ export default function DashboardPage() {
             </button>
           </motion.div>
         )}
+
+        {/* Beta Mode Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gold/10 border border-gold/30 p-4 mb-8 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-gold text-lg">🧪</span>
+            <div>
+              <p className="text-gold font-bold text-sm tracking-wider uppercase">Beta Mode</p>
+              <p className="text-ash/70 text-xs">You're using the closed beta. Features may change and bugs may occur.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/feedback" className="text-xs font-mono text-gold hover:text-gold-dark border border-gold/30 px-3 py-1.5 rounded">
+              Send Feedback
+            </Link>
+            <Link href="https://github.com/viratcore01/virasat/issues" target="_blank" className="text-xs font-mono text-gold/70 hover:text-gold border border-gold/20 px-3 py-1.5 rounded">
+              Report Issue
+            </Link>
+          </div>
+        </motion.div>
 
         {/* Header */}
         <div className="mb-10">

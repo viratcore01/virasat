@@ -1,7 +1,7 @@
 # VIRASAT — Digital Legacy Vault
 
 > **🏆 HACKATHON WINNER** — AI-Powered Legal Tech | Real-Time Impact Analytics | PWA Offline Support  
-> **⚠️ Phase 1 Compliance Implemented** | Not Yet Ready for Public Launch
+> **⚠️ Phase 1 Compliance Implemented** | **Closed Beta Live**
 
 ## ⚠️ IMPORTANT DISCLAIMERS
 
@@ -282,8 +282,22 @@ Before ANY public launch:
 
 ---
 
+## 🧪 How to Join Closed Beta
+
+Closed beta is invite-only. If you received an invite code:
+
+1. Go to https://virasat.in
+2. Click **Join Closed Beta**
+3. Enter your invite code
+4. Create your account and start the 5-step onboarding checklist
+5. Send feedback to **support@virasat.in**
+
+To report issues, use the **Report Issue** button in the dashboard sidebar or open a GitHub issue at https://github.com/viratcore01/virasat/issues.
+
+---
+
 **Built with ❤️ for India's digital inheritance revolution**
 
 *Virasat — A love letter to your family's future*
 
-**Phase 1 Status:** Complete | **Ready for Public Launch:** Not Yet (Awaiting lawyer review & security audit)
+**Phase 1 Status:** Complete | **Current Status:** Closed Beta Live (friends/family invite-only)
