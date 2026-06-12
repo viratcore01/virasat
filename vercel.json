@@ -1,4 +1,21 @@
 {
+  "buildCommand": "npm run build",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "src/app/api/cron/checkin/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "src/app/api/cron/delivery/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "src/app/api/cron/waiting-period/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/checkin",
@@ -8,7 +25,5 @@
       "path": "/api/cron/waiting-period",
       "schedule": "0 5 * * *"
     }
-  ]
-}
   ]
 }

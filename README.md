@@ -223,22 +223,26 @@ Virasat/
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
+1. Import the repo in Vercel
+2. Set all environment variables in Vercel → Settings → Environment Variables
+3. Deploy the `virasat/` directory as the project root
+4. Use the following build command:
+
 ```bash
-npm i -g vercel
-vercel
+npm run build
 ```
 
-### Environment Variables
-```env
-MONGODB_URI=your_uri
-JWT_SECRET=your_secret
-NEXTAUTH_SECRET=your_secret
-RESEND_API_KEY=your_key
-GEMINI_API_KEY=your_key
-RAZORPAY_KEY_ID=your_key
-RAZORPAY_KEY_SECRET=your_secret
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
+### Required Environment Variables on Vercel
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `RESEND_API_KEY`
+- `GEMINI_API_KEY`
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+- `NEXT_PUBLIC_APP_URL` (set to your production URL)
+- `CRON_SECRET`
+
+See `.env.example` for the full list and descriptions.
 
 ---
 
