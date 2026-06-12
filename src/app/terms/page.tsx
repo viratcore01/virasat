@@ -34,24 +34,18 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-display text-xl text-gold mb-4">1. Acceptance of Terms</h2>
-            <p>
-              By accessing or using Virasat ("the Service"), you agree to be bound by these Terms of Service.
-              If you do not agree, do not use the Service. These terms apply to all users, including
-              beneficiaries and executors who receive notifications.
-            </p>
+            <p>By accessing or using Virasat ("the Service"), you agree to be bound by these Terms of Service.
+               If you do not agree, do not use the Service. These terms apply to all users, including
+               beneficiaries and executors who receive notifications.</p>
           </section>
 
           <section>
             <h2 className="font-display text-xl text-gold mb-4">2. Description of Service</h2>
-            <p>
-              Virasat provides a digital legacy vault service that allows users to securely store information
-              about their assets and deliver messages to designated beneficiaries upon verified death. The
-              service uses zero-knowledge encryption — meaning your data is encrypted in your browser and
-              we cannot access it.
-            </p>
-            <p className="mt-3">
-              The Service includes:
-            </p>
+            <p>Virasat provides a digital legacy vault service that allows users to securely store information
+               about their assets and deliver messages to designated beneficiaries upon verified death. The
+               service uses zero-knowledge encryption — meaning your data is encrypted in your browser and
+               we cannot access it.</p>
+            <p className="mt-3">The Service includes:</p>
             <ul className="space-y-2 list-disc pl-6 mt-2">
               <li>Encrypted storage of asset information (bank accounts, crypto, property, etc.)</li>
               <li>Beneficiary designation and delivery system</li>
@@ -64,11 +58,9 @@ export default function TermsPage() {
             <h2 className="font-display text-xl text-gold mb-4">3. Not Legal Advice or Substituted Legal Process</h2>
             <div className="bg-ember/10 border border-ember/30 p-4">
               <p className="text-ember/90 font-bold mb-2">CRITICAL DISCLAIMER</p>
-              <p className="text-ash/70 text-sm leading-relaxed">
-                Virasat is NOT a legal will, NOT legal advice, and does NOT create legally binding
-                instruments for asset transfer. The Service only stores and delivers information. Actual
-                inheritance requires valid legal documentation per applicable Indian laws:
-              </p>
+              <p className="text-ash/70 text-sm leading-relaxed">Virasat is NOT a legal will, NOT legal advice, and does NOT create legally binding
+                 instruments for asset transfer. The Service only stores and delivers information. Actual
+                 inheritance requires valid legal documentation per applicable Indian laws:</p>
               <ul className="space-y-1 list-disc pl-6 mt-2 text-ash/60">
                 <li>Hindu Succession Act, 1956 (and 2005 amendment)</li>
                 <li>Muslim Personal Law (Sharia-based succession)</li>
@@ -76,21 +68,17 @@ export default function TermsPage() {
                 <li>Other applicable personal laws</li>
               </ul>
             </div>
-            <p className="mt-3">
-              Users must consult qualified legal counsel in their jurisdiction. Virasat does not guarantee
-              that any delivered information will be legally recognized or accepted by banks, courts, or
-              other institutions.
-            </p>
+            <p className="mt-3">Users must consult qualified legal counsel in their jurisdiction. Virasat does not guarantee
+               that any delivered information will be legally recognized or accepted by banks, courts, or
+               other institutions.</p>
           </section>
 
           <section>
             <h2 className="font-display text-xl text-gold mb-4">4. Religion Selection and Guidance</h2>
-            <p>
-              During signup, you may select your religion for informational purposes. This selection does
-              NOT create any religious or legal prescriptions. Virasat provides general guidance only and
-              does not tailor legal recommendations to specific religious requirements. Always consult
-              qualified legal counsel familiar with your personal law.
-            </p>
+            <p>During signup, you may select your religion for informational purposes. This selection does
+               NOT create any religious or legal prescriptions. Virasat provides general guidance only and
+               does not tailor legal recommendations to specific religious requirements. Always consult
+               qualified legal counsel familiar with your personal law.</p>
           </section>
 
           <section>
@@ -106,9 +94,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-display text-xl text-gold mb-4">6. Account Security</h2>
-            <p>
-              You acknowledge that:
-            </p>
+            <p>You acknowledge that:</p>
             <ul className="space-y-2 list-disc pl-6 mt-2">
               <li>Your master password is NEVER stored on our servers</li>
               <li>If you forget your master password AND lose your recovery shares, your data is permanently unrecoverable</li>
@@ -119,9 +105,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-display text-xl text-gold mb-4">7. Check-in and Trigger Process</h2>
-            <p>
-              The Service monitors your activity through periodic check-ins. After 3 missed check-ins:
-            </p>
+            <p>The Service monitors your activity through periodic check-ins. After 3 missed check-ins:</p>
             <ul className="space-y-2 list-disc pl-6 mt-2">
               <li>Your designated executor is notified</li>
               <li>They must upload a death certificate for verification</li>
@@ -132,9 +116,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-display text-xl text-gold mb-4">8. Data Privacy and Security</h2>
-            <p>
-              Zero-knowledge encryption means:
-            </p>
+            <p>Zero-knowledge encryption means:</p>
             <ul className="space-y-2 list-disc pl-6 mt-2">
               <li>All vault data is encrypted in your browser using AES-256-GCM</li>
               <li>We cannot decrypt your data — never have, never will</li>
@@ -145,9 +127,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-display text-xl text-gold mb-4">9. Limitation of Liability</h2>
-            <p>
-              TO THE MAXIMUM EXTENT PERMITTED BY LAW:
-            </p>
+            <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW:</p>
             <ul className="space-y-2 list-disc pl-6 mt-2">
               <li>VIRASAT IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND</li>
               <li>WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED OR ERROR-FREE</li>
@@ -158,32 +138,24 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-display text-xl text-gold mb-4">10. Governing Law</h2>
-            <p>
-              These Terms are governed by the laws of India. Any disputes shall be subject to the
-              exclusive jurisdiction of courts in India.
-            </p>
+            <p>These Terms are governed by the laws of India. Any disputes shall be subject to the
+               exclusive jurisdiction of courts in India.</p>
           </section>
 
           <section>
             <h2 className="font-display text-xl text-gold mb-4">11. Changes to Terms</h2>
-            <p>
-              We may update these Terms. Continued use after changes constitutes acceptance.
-              Material changes will be notified via email or in-app notification.
-            </p>
+            <p>We may update these Terms. Continued use after changes constitutes acceptance.
+               Material changes will be notified via email or in-app notification.</p>
           </section>
 
           <section>
             <h2 className="font-display text-xl text-gold mb-4">12. Contact</h2>
-            <p>
-              For questions: <strong className="text-gold">support@virasat.in</strong>
-            </p>
+            <p>For questions: <strong className="text-gold">support@virasat.in</strong></p>
           </section>
         </div>
 
         <div className="mt-16 pt-8 border-t border-gold/20 text-center">
-          <Link href="/" className="text-gold hover:text-gold-dark transition-colors">
-            ← Back to Home
-          </Link>
+          <Link href="/" className="text-gold hover:text-gold-dark transition-colors">← Back to Home</Link>
         </div>
       </div>
     </div>

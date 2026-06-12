@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/db'
 import { User, Executor, Beneficiary, Message, VaultItem, CheckIn } from '@/models/index'
 import { getCurrentUser } from '@/lib/auth'
