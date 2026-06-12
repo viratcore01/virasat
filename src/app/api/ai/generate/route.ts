@@ -3,7 +3,10 @@ import { NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { ok, unauthorized, badRequest, serverError } from '@/lib/api'
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyDoyy2fptYbVSbhHqVt8wwPVUWXr4-moaU'
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+if (!GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY is not configured')
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -75,7 +78,12 @@ Include:
     if (!geminiRes.ok) {
       const errText = await geminiRes.text()
       console.error('Gemini API error:', geminiRes.status, errText)
-      return serverError('AI generation failed')
+      try {
+        const errJson = JSON.parse(errText)
+        return serverError(errJson?.error?.message || 'AI generation failed')
+      } catch {
+        return serverError(`AI generation failed: ${geminiRes.status}`)
+      }
     }
 
     const geminiData = await geminiRes.json()
