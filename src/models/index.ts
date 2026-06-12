@@ -275,3 +275,5 @@ export { User } from './User'
 export { Executor } from './Executor'
 export { DeathCertificate } from './DeathCertificate'
 export { UserActivity } from './UserActivity'
+export { Subscription } from './Subscription'
+// AuditLog is exported above at line 270

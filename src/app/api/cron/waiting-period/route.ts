@@ -35,12 +35,13 @@ export async function POST(req: NextRequest) {
 
         if (!user) { results.skipped++; continue }
 
+        const userDoc = user as any
         await ExecutorRequest.updateOne({ _id: request._id }, { $set: { status: 'delivered' } })
-        await User.updateOne({ _id: user._id }, { $set: { status: 'delivered' } })
+        await User.updateOne({ _id: userDoc._id }, { $set: { status: 'delivered' } })
 
         await Promise.allSettled([
-          sendExecutorDeliveryConfirmationEmail(request.executorId.toString(), user.name).catch(() => {}),
-          sendBeneficiaryNotificationEmail(user._id.toString(), user.name).catch(() => {}),
+          sendExecutorDeliveryConfirmationEmail(request.executorId.toString(), userDoc.name).catch(() => {}),
+          sendBeneficiaryNotificationEmail(userDoc._id.toString(), userDoc.name).catch(() => {}),
         ])
 
         results.delivered++

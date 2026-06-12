@@ -1,4 +1,4 @@
-import { User } from '@/models/User'
+import type { UserDocument } from '@/models/User'
 
 export type PlanId = 'free' | 'premium'
 
@@ -33,15 +33,15 @@ export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
   },
 }
 
-export function getUserPlan(user: User): PlanId {
+export function getUserPlan(user: UserDocument): PlanId {
   return user.plan === 'premium' ? 'premium' : 'free'
 }
 
-export function isPremium(user: User): boolean {
+export function isPremium(user: UserDocument): boolean {
   return user.plan === 'premium' && user.subscriptionStatus === 'active'
 }
 
-export function checkAssetLimit(user: User, currentCount: number): { allowed: boolean; remaining: number } {
+export function checkAssetLimit(user: UserDocument, currentCount: number): { allowed: boolean; remaining: number } {
   const plan = getUserPlan(user)
   const limit = PLAN_LIMITS[plan].assetLimit
 
@@ -56,12 +56,12 @@ export function checkAssetLimit(user: User, currentCount: number): { allowed: bo
   }
 }
 
-export function canAddExecutor(user: User, currentCount: number): boolean {
+export function canAddExecutor(user: UserDocument, currentCount: number): boolean {
   const plan = getUserPlan(user)
   return currentCount < PLAN_LIMITS[plan].executorLimit
 }
 
-export function canAddVideoMessage(user: User): boolean {
+export function canAddVideoMessage(user: UserDocument): boolean {
   const plan = getUserPlan(user)
   return PLAN_LIMITS[plan].canAddVideo
 }
@@ -70,7 +70,7 @@ export function getUpgradeMessage(feature: string): string {
   return `Upgrade to Premium to access ${feature}. Free plan includes 15 assets, 1 executor, and email-only notifications.`
 }
 
-export function getSubscriptionStatus(user: User): 'free' | 'premium' | 'expired' | 'pending' {
+export function getSubscriptionStatus(user: UserDocument): 'free' | 'premium' | 'expired' | 'pending' {
   if (user.plan !== 'premium' || user.subscriptionStatus === 'cancelled' || user.subscriptionStatus === 'expired') {
     return 'free'
   }

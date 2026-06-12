@@ -22,6 +22,32 @@ export default function SettingsPage() {
   })
   const [activities, setActivities] = useState<any[]>([])
   const [loadingActivities, setLoadingActivities] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [frequency, setFrequency] = useState('weekly')
+  const [beneficiaries, setBeneficiaries] = useState<any[]>([])
+  const [savingFreq, setSavingFreq] = useState(false)
+  const [savingBen, setSavingBen] = useState(false)
+  const [benForm, setBenForm] = useState({ name: '', email: '', phone: '', relationship: '' })
+  const [execForm, setExecForm] = useState({ name: '', email: '', phone: '', relationship: '', role: 'primary', order: 0 })
+  const [savingExec, setSavingExec] = useState(false)
+
+  const saveExecutor = async () => {
+    if (!execForm.name || !execForm.email || !execForm.phone) { toast.error('Name, email, phone required'); return }
+    setSavingExec(true)
+    try {
+      const res = await fetch('/api/executor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(execForm),
+      })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error)
+      toast.success('Executor added')
+      setExecForm({ name: '', email: '', phone: '', relationship: '', role: 'primary', order: 0 })
+      void fetchAll()
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to add executor') }
+    finally { setSavingExec(false) }
+  }
 
   const fetchAll = useCallback(async () => {
     try {

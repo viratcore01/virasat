@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
 import { checkRateLimit, getRateLimitIdentifier, RATE_LIMITS } from '@/lib/rateLimit'
 
 export const securityHeaders = (_req: NextRequest, res: NextResponse): NextResponse => {

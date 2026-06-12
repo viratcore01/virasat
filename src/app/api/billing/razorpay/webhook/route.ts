@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { connectDB } from '@/lib/db'
-import { User, Subscription } from '@/models'
+import { User } from '@/models/User'
 import { ok, badRequest } from '@/lib/api'
 
 function verifyRazorpaySignature(body: string, signature: string): boolean {
@@ -29,19 +29,6 @@ export async function POST(req: NextRequest) {
         const sub = event.payload.subscription
         const userId = sub.user_id
 
-        await Subscription.findOneAndUpdate(
-          { razorpaySubscriptionId: sub.id },
-          {
-            $set: {
-              plan: 'premium',
-              status: 'active',
-              currentPeriodEnd: new Date(sub.current_end * 1000),
-              currentPeriodStart: new Date(sub.current_start * 1000),
-            },
-          },
-          { upsert: true, new: true }
-        )
-
         await User.updateOne(
           { _id: userId },
           { $set: { plan: 'premium', subscriptionStatus: 'active' } }
@@ -52,17 +39,6 @@ export async function POST(req: NextRequest) {
       case 'subscription.charged': {
         const sub = event.payload.subscription
         const userId = sub.user_id
-
-        await Subscription.findOneAndUpdate(
-          { razorpaySubscriptionId: sub.id },
-          {
-            $set: {
-              currentPeriodEnd: new Date(sub.current_end * 1000),
-              currentPeriodStart: new Date(sub.current_start * 1000),
-              status: 'active',
-            },
-          }
-        )
 
         await User.updateOne(
           { _id: userId },
@@ -76,11 +52,6 @@ export async function POST(req: NextRequest) {
         const sub = event.payload.subscription
         const userId = sub.user_id
 
-        await Subscription.findOneAndUpdate(
-          { razorpaySubscriptionId: sub.id },
-          { $set: { status: 'pending' } }
-        )
-
         await User.updateOne(
           { _id: userId },
           { $set: { subscriptionStatus: 'past_due' } }
@@ -92,11 +63,6 @@ export async function POST(req: NextRequest) {
         const sub = event.payload.subscription
         const userId = sub.user_id
 
-        await Subscription.findOneAndUpdate(
-          { razorpaySubscriptionId: sub.id },
-          { $set: { status: 'cancelled', cancelledAt: new Date() } }
-        )
-
         await User.findOneAndUpdate(
           { razorpayCustomerId: userId },
           { $set: { plan: 'free', subscriptionStatus: 'cancelled' } }
@@ -107,11 +73,6 @@ export async function POST(req: NextRequest) {
       case 'subscription.completed': {
         const sub = event.payload.subscription
         const userId = sub.user_id
-
-        await Subscription.findOneAndUpdate(
-          { razorpaySubscriptionId: sub.id },
-          { $set: { status: 'expired' } }
-        )
 
         await User.updateOne(
           { _id: userId },
@@ -125,18 +86,10 @@ export async function POST(req: NextRequest) {
         const subId = payment.subscription_id
         if (!subId) break
 
-        await Subscription.findOneAndUpdate(
-          { razorpaySubscriptionId: subId },
-          { $set: { status: 'past_due' } }
+        await User.updateOne(
+          { subscriptionId: subId },
+          { $set: { subscriptionStatus: 'past_due' } }
         )
-
-        const subscription = await Subscription.findOne({ razorpaySubscriptionId: subId })
-        if (subscription) {
-          await User.updateOne(
-            { _id: subscription.userId },
-            { $set: { subscriptionStatus: 'past_due' } }
-          )
-        }
         break
       }
 

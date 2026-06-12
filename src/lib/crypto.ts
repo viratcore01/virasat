@@ -257,7 +257,7 @@ export async function verifyMasterPasswordChecksum(masterPassword: string, check
 }
 
 async function computeChecksum(data: Uint8Array): Promise<string> {
-  const hash = await crypto.subtle.digest('SHA-256', new Uint8Array(data.buffer, data.byteOffset, data.byteLength))
+  const hash = await crypto.subtle.digest('SHA-256', data as unknown as BufferSource)
   const array = new Uint8Array(hash)
   return bufferToBase64(array).slice(0, 16)
 }
@@ -265,14 +265,14 @@ async function computeChecksum(data: Uint8Array): Promise<string> {
 async function computeShareHash(share1: string, share2: string, share3: string): Promise<string> {
   const combined = `${share1}:${share2}:${share3}`
   const encoded = new TextEncoder().encode(combined)
-  const hash = await crypto.subtle.digest('SHA-256', new Uint8Array(encoded.buffer, encoded.byteOffset, encoded.byteLength))
+  const hash = await crypto.subtle.digest('SHA-256', encoded as unknown as BufferSource)
   const array = new Uint8Array(hash)
   return bufferToBase64(array)
 }
 
 async function sha256(data: string): Promise<string> {
   const encoded = new TextEncoder().encode(data)
-  const hash = await crypto.subtle.digest('SHA-256', new Uint8Array(encoded.buffer, encoded.byteOffset, encoded.byteLength))
+  const hash = await crypto.subtle.digest('SHA-256', encoded as unknown as BufferSource)
   return bufferToBase64(new Uint8Array(hash))
 }
 

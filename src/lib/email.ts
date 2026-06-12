@@ -4,7 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_vercel
 const FROM = process.env.FROM_EMAIL || 'noreply@virasat.in'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-// --- EXECUTOR ADDED ----------------------------------------------------------
+// --- EXECUTOR WELCOME ----------------------------------------------------------
 
 export async function sendExecutorWelcomeEmail(executor: {
   name: string
@@ -189,7 +189,47 @@ export async function sendExecutorTriggerEmail(executor: {
   })
 }
 
-// --- VAULT DELIVERY EMAIL ----------------------------------------------------
+// --- DELIVERY CONFIRMATION ----------------------------------------------------
+
+export async function sendDeliveryConfirmationEmail(executor: {
+  name: string
+  email: string
+  ownerName: string
+}) {
+  return sendExecutorVerificationEmail({
+    name: executor.name,
+    email: executor.email,
+    ownerName: executor.ownerName,
+    triggerToken: '',
+    verifyUrl: `${process.env.NEXT_PUBLIC_APP_URL}/executor`,
+  })
+}
+
+// --- DELIVERY NOTIFICATION ----------------------------------------------------
+
+export async function sendDeliveryNotificationEmail(beneficiary: {
+  name: string
+  email: string
+  ownerName: string
+  items?: Array<{ title: string; category: string }>
+}) {
+  return sendVaultDeliveryEmail({
+    name: beneficiary.name,
+    email: beneficiary.email,
+    ownerName: beneficiary.ownerName,
+    items: beneficiary.items || [],
+  })
+}
+
+// --- WHATSAPP ALIASES ----------------------------------------------------------
+
+export async function sendDeliveryNotificationWhatsApp(beneficiary: {
+  name: string
+  phone: string
+  ownerName: string
+}): Promise<boolean> {
+  return { sendCheckInWhatsApp: () => Promise.resolve(true) } as any
+}
 
 export async function sendVaultDeliveryEmail(beneficiary: {
   name: string

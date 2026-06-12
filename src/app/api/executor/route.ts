@@ -8,6 +8,7 @@ import { sendExecutorWelcomeEmail } from '@/lib/email'
 import { generateSecureToken } from '@/lib/crypto'
 import { z } from 'zod'
 import { ExecutorRole } from '@/types'
+import { User } from '@/models/User'
 
 const ExecutorSchema = z.object({
   name: z.string().min(1),
@@ -32,15 +33,19 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = getCurrentUser()
-    if (!user) return unauthorized()
+    const currentUser = getCurrentUser()
+    if (!currentUser) return unauthorized()
     await connectDB()
+
+    const userDoc = await User.findById(currentUser.id).lean()
+    const user = userDoc as any
+    if (!user) return badRequest('User not found')
 
     const body = await req.json()
     const parsed = ExecutorSchema.safeParse(body)
     if (!parsed.success) return badRequest(parsed.error.errors[0].message)
 
-    const existing = await Executor.find({ userId: user.id }).sort({ order: 1, createdAt: 1 }).lean()
+    const existing = await Executor.find({ userId: user._id }).sort({ order: 1, createdAt: 1 }).lean()
     const primaryCount = existing.filter(e => e.role === 'primary').length
 
     if (parsed.data.role === 'primary' && primaryCount >= 1) {
@@ -55,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     const uniqueToken = generateSecureToken(48)
     const executor = await Executor.create({
-      userId: user.id,
+      userId: user._id,
       name: parsed.data.name,
       email: parsed.data.email,
       phone: parsed.data.phone,

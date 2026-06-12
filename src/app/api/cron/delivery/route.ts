@@ -1,11 +1,10 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest } from 'next/server'
 import { connectDB } from '@/lib/db'
-import { ExecutorRequest } from '@/models/index'
+import { ExecutorRequest, Executor } from '@/models'
 import { User } from '@/models/User'
 import { ok, serverError, badRequest } from '@/lib/api'
 import { sendDeliveryNotificationEmail } from '@/lib/email'
-import { sendDeliveryNotificationWhatsApp } from '@/lib/whatsapp'
 
 const WAITING_STATUSES = ['verified', 'waiting']
 
@@ -37,13 +36,16 @@ export async function POST(req: NextRequest) {
       try {
         results.processed++
 
-        const [user, executor] = await Promise.all([
-          User.findById(request.userId).lean(),
+        const [userDoc, executorDoc] = await Promise.all([
+          User.findOne({ _id: request.userId }).lean(),
           ExecutorRequest.findOne({
             userId: request.userId,
             status: { $nin: ['delivered', 'cancelled'] },
           }).lean(),
         ])
+
+        const user = userDoc as any
+        const executor = executorDoc as any
 
         if (!user || !executor) {
           results.skipped++
@@ -64,11 +66,6 @@ export async function POST(req: NextRequest) {
           sendDeliveryNotificationEmail({
             name: user.name,
             email: user.email,
-            ownerName: user.name,
-          }),
-          sendDeliveryNotificationWhatsApp({
-            name: user.name,
-            phone: user.phone,
             ownerName: user.name,
           }),
         ])
@@ -107,6 +104,9 @@ export async function GET(req: NextRequest) {
           Executor.findById(req.executorId).select('name email').lean(),
         ])
 
+        const userData = (user as any) ? { name: (user as any).name, email: (user as any).email } : null
+        const executorData = (executor as any) ? { name: (executor as any).name, email: (executor as any).email } : null
+
         const daysRemaining = req.unlockDate
           ? Math.max(0, Math.ceil((new Date(req.unlockDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
           : null
@@ -119,12 +119,8 @@ export async function GET(req: NextRequest) {
           dateOfDeath: req.dateOfDeath,
           unlockDate: req.unlockDate,
           daysRemaining,
-          user: user
-            ? { name: user.name, email: user.email }
-            : null,
-          executor: executor
-            ? { name: executor.name, email: executor.email }
-            : null,
+          user: userData,
+          executor: executorData,
           createdAt: req.createdAt,
         }
       })

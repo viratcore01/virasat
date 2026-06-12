@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest } from 'next/server'
 import { connectDB } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { User, Subscription } from '@/models'
+import { User } from '@/models/User'
 import { ok, unauthorized, badRequest, serverError } from '@/lib/api'
 import Razorpay from 'razorpay'
 
@@ -42,69 +42,32 @@ export async function POST(req: NextRequest) {
     const plan = PLANS[planId]
 
     if (planId === 'premium') {
-      const existingSubscription = await Subscription.findOne({ userId: user._id })
-      
-      if (existingSubscription?.razorpaySubscriptionId) {
-        await razorpay.subscriptions.cancel({
-          subscription_id: existingSubscription.razorpaySubscriptionId,
-          cancel_at_cycle_end: false,
-        })
-      }
-
-      const subscription = await razorpay.subscriptions.create({
-        plan_id: process.env.RAZORPAY_PLAN_ID_MONTHLY!,
-        customer_notify: 1,
-        total_count: 12,
-        notes: { userId: user._id.toString() },
+      const order = await razorpay.orders.create({
+        amount: 49900,
+        currency: 'INR',
+        receipt: `virasat-${user._id}-${Date.now()}`,
+        payment_capture: true,
       })
 
-      await Subscription.findOneAndUpdate(
-        { userId: user._id },
-        {
-          $set: {
-            plan: 'premium',
-            status: 'pending',
-            razorpaySubscriptionId: subscription.id,
-            currentPeriodStart: new Date(),
-            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          },
-        },
-        { upsert: true, new: true }
-      )
-
-      await User.updateOne(
-        { _id: user._id },
-        { $set: { plan: 'premium', subscriptionStatus: 'pending' } }
-      )
-
       return ok({
-        subscriptionId: subscription.id,
-        status: subscription.status,
-        shortUrl: subscription.short_url,
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
         razorpayKey: process.env.RAZORPAY_KEY_ID,
+        name: 'Virasat Premium',
+        description: '₹499/month',
+        prefill: { email: user.email, contact: user.phone },
       })
     }
 
-    await Subscription.findOneAndUpdate(
-      { userId: user._id },
-      {
-        $set: {
-          plan: 'free',
-          status: 'cancelled',
-          cancelledAt: new Date(),
-        },
-      },
-      { upsert: true, new: true }
-    )
-
     await User.updateOne(
       { _id: user._id },
-      { $set: { plan: 'free', subscriptionStatus: 'cancelled' } }
+      { $set: { subscriptionStatus: 'free', subscriptionId: null } }
     )
 
     return ok({ success: true, plan: 'free' })
   } catch (err) {
-    console.error('Razorpay subscription creation failed:', err)
+    console.error('Razorpay order creation failed:', err)
     return serverError(err)
   }
 }
