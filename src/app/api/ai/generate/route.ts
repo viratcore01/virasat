@@ -71,40 +71,28 @@ Include:
       }
     }
 
-    const geminiRes = await fetchWithBackoff(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      payload
+    let geminiRes = await fetchWithBackoff(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      payload,
+      1
     )
 
-    if (!geminiRes.ok && geminiRes.status === 429) {
-      const fallback = await fetchWithBackoff(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-        payload
+    if (!geminiRes.ok) {
+      console.error('Gemini primary model error:', geminiRes.status, await geminiRes.text())
+      geminiRes = await fetchWithBackoff(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        payload,
+        1
       )
-
-      if (fallback.ok) {
-        const geminiData = await fallback.json()
-        const generatedContent = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text
-        if (generatedContent) return ok({ content: generatedContent })
-        return serverError('AI generation failed')
-      }
-
-      const errText = await fallback.text()
-      console.error('Gemini fallback error:', fallback.status, errText)
-      try {
-        const errJson = JSON.parse(errText)
-        return serverError(errJson?.error?.message || 'AI generation failed')
-      } catch {
-        return serverError(`AI generation failed: ${fallback.status}`)
-      }
     }
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text()
-      console.error('Gemini API error:', geminiRes.status, errText)
+      console.error('Gemini fallback model error:', geminiRes.status, errText)
       try {
         const errJson = JSON.parse(errText)
-        return serverError(errJson?.error?.message || 'AI generation failed')
+        const userMessage = errJson?.error?.message || `AI generation failed (HTTP ${geminiRes.status})`
+        return serverError(userMessage)
       } catch {
         return serverError(`AI generation failed: ${geminiRes.status}`)
       }
@@ -112,7 +100,10 @@ Include:
 
     const geminiData = await geminiRes.json()
     const generatedContent = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text
-    if (!generatedContent) return serverError('AI generation failed')
+    if (!generatedContent) {
+      console.error('Gemini response missing content:', JSON.stringify(geminiData).slice(0, 500))
+      return serverError('AI generation failed: empty response')
+    }
 
     return ok({ content: generatedContent })
 
@@ -122,13 +113,23 @@ Include:
   }
 }
 
-async function fetchWithBackoff(url: string, body: any, retries = 2): Promise<Response> {
+async function fetchWithBackoff(url: string, body: any, retries = 1): Promise<Response> {
   const headers = { 'Content-Type': 'application/json' }
+
   for (let attempt = 0; attempt <= retries; attempt++) {
     const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) })
-    if (res.ok || res.status !== 429) return res
-    const delay = Math.min(1000 * 2 ** attempt, 4000)
-    await new Promise(r => setTimeout(r, delay))
+
+    if (res.ok) return res
+
+    if (res.status === 429 && attempt < retries) {
+      const delay = 2000
+      console.error(`Gemini rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${retries + 1})`)
+      await new Promise(r => setTimeout(r, delay))
+      continue
+    }
+
+    return res
   }
+
   return fetch(url, { method: 'POST', headers, body: JSON.stringify(body) })
 }
