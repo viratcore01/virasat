@@ -261,17 +261,17 @@ export default function SignupPage() {
                   <div className="space-y-6">
                     <div>
                       <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Login Password</label>
-                      <input {...register('password')} type="password" placeholder="At least 8 characters" className="virasat-input" />
-                      {errors.password && <p className="text-ember text-xs mt-1 font-mono">{errors.password.message}</p>}
+                      <input {...register('password')} type="password" placeholder="At least 8 characters" className="virasat-input" required />
+                       {errors.password && <p className="text-ember text-xs mt-1 font-mono">{errors.password.message}</p>}
                     </div>
                     <div>
                       <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Master Password (Encryption Key)</label>
-                      <input {...register('masterPassword')} type="password" placeholder="At least 10 characters" className="virasat-input" />
-                      {errors.masterPassword && <p className="text-ember text-xs mt-1 font-mono">{errors.masterPassword.message}</p>}
+                      <input {...register('masterPassword')} type="password" placeholder="At least 10 characters" className="virasat-input" required />
+                       {errors.masterPassword && <p className="text-ember text-xs mt-1 font-mono">{errors.masterPassword.message}</p>}
                     </div>
                     <div>
-                      <input {...register('confirmMaster')} type="password" placeholder="Confirm master password" className="virasat-input" />
-                      {errors.confirmMaster && <p className="text-ember text-xs mt-1 font-mono">{errors.confirmMaster.message}</p>}
+                      <input {...register('confirmMaster')} type="password" placeholder="Confirm master password" className="virasat-input" required />
+                       {errors.confirmMaster && <p className="text-ember text-xs mt-1 font-mono">{errors.confirmMaster.message}</p>}
                     </div>
                   </div>
                   <div className="flex gap-3">
@@ -290,27 +290,27 @@ export default function SignupPage() {
                   <div className="space-y-6">
                     <div>
                       <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Full Name</label>
-                      <input {...register('name')} type="text" placeholder="Your full name" className="virasat-input" />
-                      {errors.name && <p className="text-ember text-xs mt-1 font-mono">{errors.name.message}</p>}
+                      <input {...register('name')} type="text" placeholder="Your full name" className="virasat-input" required />
+                       {errors.name && <p className="text-ember text-xs mt-1 font-mono">{errors.name.message}</p>}
                     </div>
                     <div>
                       <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Email</label>
-                      <input {...register('email')} type="email" placeholder="you@example.com" className="virasat-input" />
-                      {errors.email && <p className="text-ember text-xs mt-1 font-mono">{errors.email.message}</p>}
+                      <input {...register('email')} type="email" placeholder="you@example.com" className="virasat-input" required />
+                       {errors.email && <p className="text-ember text-xs mt-1 font-mono">{errors.email.message}</p>}
                     </div>
                     <div>
                       <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Phone</label>
-                      <input {...register('phone')} type="tel" placeholder="10-digit mobile number" className="virasat-input" />
-                      {errors.phone && <p className="text-ember text-xs mt-1 font-mono">{errors.phone.message}</p>}
+                      <input {...register('phone')} type="tel" placeholder="10-digit mobile number" className="virasat-input" required />
+                       {errors.phone && <p className="text-ember text-xs mt-1 font-mono">{errors.phone.message}</p>}
                     </div>
                     <div>
                       <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Date of Birth</label>
-                      <input {...register('dob')} type="date" className="virasat-input" />
-                      {errors.dob && <p className="text-ember text-xs mt-1 font-mono">{errors.dob.message}</p>}
+                      <input {...register('dob')} type="date" className="virasat-input" required />
+                       {errors.dob && <p className="text-ember text-xs mt-1 font-mono">{errors.dob.message}</p>}
                     </div>
                     <div>
                       <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Religion (for guidance only)</label>
-                      <select {...register('religion')} className="virasat-input">
+                      <select {...register('religion')} className="virasat-input" required>
                         <option value="hindu">Hindu</option>
                         <option value="muslim">Muslim</option>
                         <option value="christian">Christian</option>
@@ -321,7 +321,7 @@ export default function SignupPage() {
                     </div>
                     <div>
                       <label className="text-ash/60 text-xs font-mono tracking-wider uppercase block mb-2">Check-in Frequency</label>
-                      <select {...register('checkInFrequency')} className="virasat-input">
+                      <select {...register('checkInFrequency')} className="virasat-input" required>
                         <option value="weekly">Every week</option>
                         <option value="fortnightly">Every 2 weeks</option>
                         <option value="monthly">Every month</option>

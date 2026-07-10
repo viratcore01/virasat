@@ -70,7 +70,7 @@ Virasat MUST remain a **secure digital vault and delivery tool** only:
 ### Security
 - ✅ AES-256-GCM encryption (client-side only)
 - ✅ Zero-knowledge (server never decrypts vault data)
-- ✅ Shamir Secret Sharing for recovery
+- ✅ 2-party recovery: password + (server share OR executor share); losing both = permanent data loss
 - ✅ PBKDF2 key derivation (100,000 iterations)
 - ✅ Rate limiting on sensitive endpoints
 - ✅ Security headers (CSP, HSTS, X-Frame-Options)
@@ -151,9 +151,9 @@ Virasat MUST remain a **secure digital vault and delivery tool** only:
 ## 6. Security Guarantees
 
 - Zero-knowledge encryption: server never decrypts user vault data
-- Shamir shares stored securely; no single point of failure
+- Recovery shares (server share, executor share) stored securely
 - Master password is never stored or recoverable by server
-- Recovery requires both master password and shares
+- Recovery requires the master password plus either the server share or the executor share; losing both means permanent data loss
 - Death certificate verification requires document upload + 30-day waiting period before delivery
 - Multi-executor support: primary + backup executors (max 3)
 - Activity logging for user transparency

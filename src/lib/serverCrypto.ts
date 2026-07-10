@@ -26,7 +26,20 @@ function isValidEncryptedFormat(data: string): boolean {
   if (!data || typeof data !== 'string') return false
   const parts = data.split(':')
   if (parts.length !== 3) return false
-  return parts[0].length === 24 && parts[1].length === 24 && parts[2].length === 32
+
+  const [ivB64, ciphertextB64, tagB64] = parts
+  const base64Pattern = /^[A-Za-z0-9+/]+={0,2}$/
+  if (!ivB64 || !ciphertextB64 || !tagB64) return false
+  if (!base64Pattern.test(ivB64) || !base64Pattern.test(ciphertextB64) || !base64Pattern.test(tagB64)) return false
+
+  try {
+    const ivBytes = Buffer.from(ivB64, 'base64')
+    const tagBytes = Buffer.from(tagB64, 'base64')
+    Buffer.from(ciphertextB64, 'base64')
+    return ivBytes.length === IV_LENGTH && tagBytes.length === AUTH_TAG_LENGTH
+  } catch {
+    return false
+  }
 }
 
 export function encryptField(plaintext: string): string {

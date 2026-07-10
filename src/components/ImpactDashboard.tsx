@@ -125,6 +125,9 @@ export default function ImpactDashboard() {
           <p className="font-body text-ash/80 text-xl max-w-3xl mx-auto">
             Every number represents a family protected, a legacy preserved, and countless court battles prevented.
           </p>
+          <span className="inline-block mt-4 px-3 py-1 rounded-full border border-gold/40 text-gold/80 font-mono text-xs tracking-wider uppercase">
+            ⚠️ Demo Data — not real usage statistics
+          </span>
         </motion.div>
 
         {/* Key Metrics */}
@@ -247,7 +250,7 @@ export default function ImpactDashboard() {
           </p>
           <div className="flex justify-center gap-4">
             <div className="text-center">
-              <div className="font-display text-4xl text-sage mb-2">98.7%</div>
+              <div className="font-display text-4xl text-sage mb-2">{data.engagement.checkInSuccessRate}%</div>
               <div className="font-mono text-gold/60 text-xs tracking-wider uppercase">Check-in Success Rate</div>
             </div>
             <div className="text-center">

@@ -187,60 +187,7 @@ export function clearSessionKey(userId: string): void {
   sessionStorage.removeItem(`virasat_key_${userId}`)
 }
 
-// ─── SHAMIR'S SECRET SHARING ──────────────────────────────────────────────────
-
-/**
- * Splits master password into 3 shares (2 needed to reconstruct)
- * Share 1 → Virasat server (encrypted)
- * Share 2 → Executor (printed QR)
- * Share 3 → Owner (written down)
- */
-export async function splitMasterPassword(masterPassword: string): Promise<{
-  share1: string
-  share2: string
-  share3: string
-  hash: string
-  checksum: string
-}> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(masterPassword)
-
-  const r1 = crypto.getRandomValues(new Uint8Array(data.length))
-  const r2 = crypto.getRandomValues(new Uint8Array(data.length))
-
-  const share3 = new Uint8Array(data.length)
-  for (let i = 0; i < data.length; i++) {
-    share3[i] = data[i] ^ r1[i] ^ r2[i]
-  }
-
-  const checksum = await computeChecksum(data)
-  const hash = await computeShareHash(bufferToBase64(r1), bufferToBase64(r2), bufferToBase64(share3))
-
-  return {
-    share1: bufferToBase64(r1),
-    share2: bufferToBase64(r2),
-    share3: bufferToBase64(share3),
-    hash,
-    checksum,
-  }
-}
-
-/**
- * Reconstructs and verifies master password from any 2 shares
- * Returns null if verification fails
- */
-export function reconstructMasterPassword(shareA: string, shareB: string, shareC: string, checksum?: string): string {
-  const a = base64ToBuffer(shareA)
-  const b = base64ToBuffer(shareB)
-  const c = base64ToBuffer(shareC)
-
-  const result = new Uint8Array(a.length)
-  for (let i = 0; i < a.length; i++) {
-    result[i] = a[i] ^ b[i] ^ c[i]
-  }
-
-  return new TextDecoder().decode(result)
-}
+// ─── SHARE INTEGRITY HELPERS ──────────────────────────────────────────────────
 
 export async function verifyShareIntegrity(share: string, expectedHash: string): Promise<boolean> {
   const allShares = [share]

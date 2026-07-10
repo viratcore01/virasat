@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.637.0",
@@ -24,12 +25,13 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.408.0",
     "mongoose": "^8.5.1",
-    "next": "14.2.5",
+    "next": "^14.2.35",
     "next-pwa": "^5.6.0",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.14",
     "openai": "^6.33.0",
     "puppeteer-core": "^24.40.0",
+    "razorpay": "^2.9.4",
     "react": "^18",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18",
@@ -40,7 +42,6 @@
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "stripe": "^22.0.0",
-    "razorpay": "^2.9.4",
     "tailwind-merge": "^2.4.0",
     "uploadthing": "^6.13.2",
     "uuid": "^10.0.0",
@@ -59,6 +60,7 @@
     "postcss": "^8",
     "puppeteer": "^24.40.0",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.9"
   }
 }

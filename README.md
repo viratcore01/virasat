@@ -37,7 +37,7 @@
 
 ### ⚡ Advanced Security
 - **Zero-Knowledge Encryption**: AES-256-GCM, server never sees plaintext
-- **Shamir Secret Sharing**: 3-of-2 threshold recovery (lose shares = permanent data loss)
+- **Password Recovery**: requires your password plus either your registered server share or your executor's share — losing both means permanent data loss
 - **Comprehensive Audit Logging**: All sensitive actions tracked for compliance
 - **DPDP Act 2023 Compliant**: Data export, deletion, and consent management
 
@@ -69,7 +69,7 @@
 
 ### Security Hardening
 - ✅ `AccessLog` model for comprehensive audit trails
-- ✅ Encryption: AES-256-GCM + PBKDF2 + Shamir Secret Sharing
+- ✅ Encryption: AES-256-GCM + PBKDF2, 2-party recovery (server share OR executor share)
 - ✅ Zero-knowledge architecture (server never decrypts vault data)
 - ✅ Rate limiting on sensitive endpoints
 - ✅ Security headers (CSP, HSTS, X-Frame-Options)
@@ -108,7 +108,7 @@
 
 ### 2. Technical Innovation
 - AI Legal Tech: First Indian app with Gemini legal drafting
-- Zero-Knowledge Crypto: Military-grade encryption + Shamir Secret Sharing
+- Zero-Knowledge Crypto: AES-256-GCM encryption with 2-party recovery (server share OR executor share)
 - Real-Time Systems: WebSocket + PWA architecture
 - Multi-Modal Messages: Video, voice, text inheritance
 
@@ -134,7 +134,7 @@ curl -X POST http://localhost:3000/api/demo/populate
 ```
 
 ### Step 2: Show Impact Dashboard
-Visit `/impact` to see:
+Visit `/impact` to see (⚠️ DEMO DATA — not real usage statistics):
 - 50+ families protected
 - ₹2.5Cr+ assets secured
 - 15+ court cases prevented
@@ -184,6 +184,8 @@ npm run dev
 
 ## 📈 Impact Metrics
 
+> ⚠️ DEMO DATA — not real usage statistics. These figures are illustrative and hardcoded for demonstration purposes only.
+
 | Metric | Value | Description |
 |--------|-------|-------------|
 | Families Protected | 50+ | Active legacy plans created |
@@ -200,7 +202,7 @@ npm run dev
 ```
 Virasat/
 ├── AI Layer (Gemini API)
-├── Crypto Engine (AES-256-GCM + Shamir)
+├── Crypto Engine (AES-256-GCM, 2-party recovery)
 ├── Analytics Engine (Real-time)
 ├── Real-time Layer (WebSocket)
 ├── PWA Layer (Offline Support)
