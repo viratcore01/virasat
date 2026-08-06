@@ -269,7 +269,7 @@ See `.env.example` for the full list and descriptions.
 - 📥 Export your data: `GET /api/user/data-export`
 - 🗑️ Delete your account: `DELETE /api/user/delete-account`
 - 📋 View consent history: Check Privacy Policy
-- 📞 Contact privacy officer: `support@virasat.in`
+
 
 ---
 
@@ -290,13 +290,6 @@ Before ANY public launch:
 
 ## 🧪 How to Join Closed Beta
 
-Closed beta is invite-only. If you received an invite code:
-
-1. Go to https://virasat.in
-2. Click **Join Closed Beta**
-3. Enter your invite code
-4. Create your account and start the 5-step onboarding checklist
-5. Send feedback to **support@virasat.in**
 
 To report issues, use the **Report Issue** button in the dashboard sidebar or open a GitHub issue at https://github.com/viratcore01/virasat/issues.
 
